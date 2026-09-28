@@ -25,7 +25,7 @@ Working rules:
 - `scenes/__init__.py` and `aionanim/__init__.py` must import nothing, or a scene file rendered by path gets loaded twice.
 - A method looks up globals in the module that defines it: moving a scene or mixin means moving its imports too (e.g. `RunsContinuously` in `scenes/gradiometer_gw.py` serves the light-shift scenes).
 - One-off scripts: `.venv/bin/python`.
-- Git root is `~/talks`, so git paths are prefixed `qsim_visit/`. Stage explicit paths — the working tree usually holds in-progress scripts of the user's, and `git add -A` will sweep them into your commit.
+- This is its own repo (`github.com/taw181/qsim_visit`), git root is the project root. Stage explicit paths — the working tree usually holds in-progress scripts of the user's, and `git add -A` will sweep them into your commit.
 - Annotations belong where the physics happens: don't offset a recoil arrow off its atom to dodge an overlap — the overlap is fine.
 - Measured data: `aionanim/plots/dai_fringes.py` → AION DAI fringes and Lissajous ellipse (Zenodo 19592552); `aionanim/plots/gw_sensitivity.py` → detector curves with merger tracks.
 - Render-and-check loop, colour sampling, manim traps: the `manim-atom-interferometry` skill.
