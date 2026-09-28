@@ -199,18 +199,19 @@ class DeckSlide(Slide):
         return super().remove(*[m for m in mobjects if m not in self.furniture])
 
 
-class Clicks:
-    """beat() stops and waits for the presenter."""
+class Clicks(DeckSlide):
+    """A DeckSlide whose beat() stops and waits for the presenter."""
 
     def beat(self):
         self.next_slide()
 
 
-class RunsOnIntoLoops:
-    """Each stretch plays straight on into the loop after it, so a stage is one
-    click however it is cut: the click starts the stage, and its loop holds
-    the screen until the next. (Without auto_next the stretch would stop on its
-    last frame and need a click of its own to start its loop.)
+class RunsOnIntoLoops(DeckSlide):
+    """A DeckSlide on which each stretch plays straight on into the loop after
+    it, so a stage is one click however it is cut: the click starts the stage,
+    and its loop holds the screen until the next. (Without auto_next the
+    stretch would stop on its last frame and need a click of its own to start
+    its loop.)
 
     auto_next belongs to the segment a next_slide() opens; one with nothing
     before it sets the options of the slide's first segment instead.
@@ -316,15 +317,15 @@ class AtomInterferometrySlide(SectionSlide):
     SECTION = r"Atom interferometry"
 
 
-class SinglePhotonMachZehnderSlide(Clicks, DeckSlide, SinglePhotonMachZehnder):
+class SinglePhotonMachZehnderSlide(Clicks, SinglePhotonMachZehnder):
     pass
 
 
-class ClockPhaseTermsSlide(Clicks, DeckSlide, ClockPhaseTerms):
+class ClockPhaseTermsSlide(Clicks, ClockPhaseTerms):
     pass
 
 
-class GradiometerSlide(Clicks, DeckSlide, Gradiometer):
+class GradiometerSlide(Clicks, Gradiometer):
     pass
 
 
@@ -354,7 +355,7 @@ GW150914_KEY = (
 GW150914_FORMAT = replace(CITE_LABELLED_FORMAT, collaboration="LIGO Collaboration")
 
 
-class MergerOnSensitivityPlotSlide(Clicks, DeckSlide, MergerOnSensitivityPlot):
+class MergerOnSensitivityPlotSlide(Clicks, MergerOnSensitivityPlot):
     """The left panel becomes real LIGO data partway through, so its citation
     joins the detector paper under the same "LIGO" label."""
 
@@ -373,7 +374,7 @@ class MergerOnSensitivityPlotSlide(Clicks, DeckSlide, MergerOnSensitivityPlot):
         return labelled_citation(items, fmt=CITE_LABELLED_FORMAT)
 
 
-class SensitivityLandscapeSlide(Clicks, DeckSlide, SensitivityBuildUp):
+class SensitivityLandscapeSlide(Clicks, SensitivityBuildUp):
     """The landscape without AEDGE: AION's three stages fill the gap."""
 
     GAP_FILLERS = ("AION-10", "AION-100", "AION-km")
@@ -387,13 +388,13 @@ class SensitivityLandscapeSlide(Clicks, DeckSlide, SensitivityBuildUp):
     CITE_CORNER = UR  # the plot fills the slide down to its axis label
 
 
-class GradiometerGWStretchSlide(Clicks, DeckSlide, GradiometerGWStretchContinuous):
+class GradiometerGWStretchSlide(Clicks, GradiometerGWStretchContinuous):
     """Continuous: lab time never stops between the first pulse and the ports,
     so the far cloud visibly splits L/c after the near one. One click runs the
     whole sequence; the stops are the set-up before it and the readout after."""
 
 
-class DarkMatterScaleSlide(RunsOnIntoLoops, DeckSlide, DarkMatterScale):
+class DarkMatterScaleSlide(RunsOnIntoLoops, DarkMatterScale):
     CITE = ("badurinaAIONAtomInterferometer2020",)  # the inset's curves
     # short, to end before the Earth's limb in the first view and clear the
     # verdict in the last
@@ -403,12 +404,12 @@ class DarkMatterScaleSlide(RunsOnIntoLoops, DeckSlide, DarkMatterScale):
         self.loop(super().hold)
 
 
-class DarkMatterFieldSlide(RunsOnIntoLoops, DeckSlide, DarkMatterField):
+class DarkMatterFieldSlide(RunsOnIntoLoops, DarkMatterField):
     def hold(self):
         self.loop(super().hold)
 
 
-class DarkMatterPhaseSlide(Clicks, DeckSlide, DarkMatterPhaseContinuous):
+class DarkMatterPhaseSlide(Clicks, DarkMatterPhaseContinuous):
     """Continuous: the field keeps oscillating while the pulses fire, so one
     click runs the interferometer from the first pulse to the ports."""
 
@@ -527,15 +528,15 @@ class ExperimentSequenceSlide(DeckSlide, ExperimentSequenceSimple):
     ][:SEQ_SIMPLE_REFERENCES]
 
 
-class CoolingSequenceSlide(LoopingStages, DeckSlide, CoolingSequence):
+class CoolingSequenceSlide(LoopingStages, CoolingSequence):
     CITE = "pasatembouProgressUltracoldSr2024"
 
 
-class DipoleTrapLoadingSlide(LoopingStages, DeckSlide, DipoleTrapLoading):
+class DipoleTrapLoadingSlide(LoopingStages, DipoleTrapLoading):
     pass
 
 
-class VelocitySlicingSlide(LoopingStages, DeckSlide, VelocitySlicing):
+class VelocitySlicingSlide(LoopingStages, VelocitySlicing):
     pass
 
 
@@ -543,7 +544,7 @@ class VelocitySlicingSlide(LoopingStages, DeckSlide, VelocitySlicing):
 DAI_PAPER = "baynhamPrototypeDifferentialAtom2026"
 
 
-class LightShiftSignalSlide(Clicks, DeckSlide, LightShiftSignalContinuous):
+class LightShiftSignalSlide(Clicks, LightShiftSignalContinuous):
     """Continuous: lab time never stops from the first pulse to the imaging,
     so the beam is a window the atoms fly through. The readout ends on the
     camera image of the two clouds, S left and P right, in place of the
@@ -569,11 +570,11 @@ class LightShiftSignalSlide(Clicks, DeckSlide, LightShiftSignalContinuous):
         return Group(image, labels)
 
 
-class SignalInjectionSlide(LoopingStages, DeckSlide, SignalInjection):
+class SignalInjectionSlide(LoopingStages, SignalInjection):
     CITE = (DAI_PAPER,)
 
 
-class LaserNoiseLissajousSlide(Clicks, DeckSlide, LaserNoiseLissajous):
+class LaserNoiseLissajousSlide(Clicks, LaserNoiseLissajous):
     """The quiet run full size, then shrunk to the top panel with the noisy
     run below it, both onto the one Lissajous plot."""
 
@@ -703,7 +704,7 @@ class AICECernSlide(DeckSlide):
         self.play(FadeIn(figure), FadeIn(depth), FadeIn(label), run_time=0.8)
 
 
-class AEDGESlide(Clicks, DeckSlide, AEDGESensitivity):
+class AEDGESlide(Clicks, AEDGESensitivity):
     """The two sensitivity plots as the talk has shown them, then a click
     puts AEDGE on both."""
 

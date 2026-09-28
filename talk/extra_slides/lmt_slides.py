@@ -27,7 +27,7 @@ class LargeMomentumTransferSlide(DeckSlide, LargeMomentumTransfer):
     """No stops: the ladder plays straight through."""
 
 
-class LMTMachZehnderSlide(Clicks, DeckSlide, LMTMachZehnder):
+class LMTMachZehnderSlide(Clicks, LMTMachZehnder):
     """A click after each stage, then the area against the N = 1 one."""
 
 
