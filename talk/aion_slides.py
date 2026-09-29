@@ -626,8 +626,9 @@ BASELINE_ARROW_PX = (244, 383)  # the arrow's midpoint
 
 
 class Aion10BeecroftSlide(DeckSlide):
-    """The 10 m baseline and the stairwell it runs down, then the building cut
-    away round it -- laid out as the row they end up in, so nothing moves.
+    """The 10 m baseline, the building cut away round it, then the stairwell
+    it runs down, one per click left to right -- laid out as the row they end
+    up in, so nothing moves.
     The building is a tall, narrow cutaway, so it takes nearly the full height
     of the slide to be legible; it sits right of the title, so it can rise
     level with it."""
@@ -658,9 +659,12 @@ class Aion10BeecroftSlide(DeckSlide):
         length.rotate(PI / 2).move_to(cover)
         labelled = Group(baseline, cover, length)
 
-        self.play(FadeIn(title), FadeIn(labelled), FadeIn(stairwell), run_time=0.8)
+        # left to right, one per click
+        self.play(FadeIn(title), FadeIn(labelled), run_time=0.8)
         self.next_slide()
         self.play(FadeIn(building, shift=LEFT * 0.3), run_time=0.8)
+        self.next_slide()
+        self.play(FadeIn(stairwell, shift=LEFT * 0.3), run_time=0.8)
 
 
 # The PX46 shaft in aice.png (1199 x 672 px): from under the surface building
