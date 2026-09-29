@@ -10,8 +10,8 @@ is still showing the slow, weak waves emitted seconds earlier while the centre
 shows the fast, strong ones -- that contrast across the sheet *is* the chirp.
 
 MergerOnSensitivityPlot runs the merger twice. First beside LIGO itself (the
-LIGODuringMerger scene, played as a video, whose test masses swing to this
-merger's chirp); then, with the sheet flattened and
+interferometer of aionanim.scenes.ligo, drawn into the right half, already
+lit, its test masses swinging to this merger's own chirp); then, with the sheet flattened and
 the holes back in, beside LIGO's sensitivity curve, with a dot riding the source's characteristic-strain track in step with the
 sheet. The track is real (a 60 Msun binary at z = 0.1, from aionanim.physics.gw_signals);
 the dot's timing is not -- ten years of inspiral are squeezed into the
@@ -25,7 +25,6 @@ from manim import *
 from PIL import Image
 
 from aionanim.tools.gw_plot import curve_points, detector_region, plot_point, sensitivity_axes
-from aionanim.tools.video import StreamedFrames, VideoFrame
 from aionanim.physics.gw_signals import (
     TRACK_START,
     YEAR,
@@ -36,6 +35,14 @@ from aionanim.physics.gw_signals import (
     time_before_merger,
 )
 from aionanim.resources import data_path
+from aionanim.scenes.ligo import (
+    Panel,
+    make_apparatus,
+    make_equation,
+    make_light,
+    make_strain_trace,
+    returning_waves,
+)
 from aionanim.style import *
 
 # --- sheet geometry -------------------------------------------------------
@@ -334,7 +341,7 @@ class BlackHoleMerger(ThreeDScene):
     )
     AMBIENT_ROTATION = 0.02  # rad/s
 
-    def entrance(self):
+    def entrance(self, clock):
         """Animations to play as the sheet and the title come in."""
         return []
 
@@ -375,7 +382,7 @@ class BlackHoleMerger(ThreeDScene):
         ).to_corner(UL)
         self.add_fixed_in_frame_mobjects(title)
         self.play(
-            FadeIn(sheet, run_time=1.5), FadeIn(title, run_time=1.0), *self.entrance()
+            FadeIn(sheet, run_time=1.5), FadeIn(title, run_time=1.0), *self.entrance(clock)
         )
 
         # The sheet redraws from the clock from here on; everything below just
@@ -489,17 +496,19 @@ LIGO_DATA_CENTER = np.array([SIDE_SHEET_X, -0.75, 0.0])
 # the ringdown. That stretch of the track is recoloured as the data comes in.
 LIGO_DATA_BEFORE_MERGER = 0.17
 
-# The first run of the merger plays beside LIGODuringMerger (scenes/ligo.py),
-# rendered to a video by data_scripts/render_ligo_michelson.py; its background
-# is the talk's own, so it needs no frame. It fills the right half where the
-# plot will go, and is up, fully set up, from the first frame. Its first
-# LIGO_VIDEO_LEAD seconds (light flowing, no wave yet) play as the chirp strip
-# comes in; after that it runs off the merger's clock, so its wave is the
-# sheet's, in step.
-LIGO_VIDEO = data_path("videos", "ligo_michelson.mp4")
-LIGO_VIDEO_WIDTH = 6.7
-LIGO_VIDEO_CENTER = np.array([3.65, -0.25, 0.0])
-LIGO_VIDEO_LEAD = 1.2
+# The first run of the merger plays beside LIGO: the interferometer of
+# aionanim.scenes.ligo, which is drawn for the whole frame, shrunk into the
+# right half where the plot will go. It is up, already lit, from the first
+# frame, and runs off the merger's clock, with the merger's own h(t) as its
+# wave, scaled so the peak takes the detector from dark to fully bright.
+LIGO_PANEL = Panel(scale=0.47, shift=[3.65, -0.25, 0.0])
+LIGO_TRACE_SPAN = (-0.3, T_END + 0.3)  # the stretch of the clock its h(t) spans
+_PEAK_STRAIN = np.max(np.abs(observed_strain(np.linspace(0.0, T_END, 20001))))
+
+
+def ligo_strain(t):
+    """The merger's h at clock time t, normalised to a peak of 1."""
+    return observed_strain(t) / _PEAK_STRAIN
 
 # Ten years into T_INSPIRAL: the time left to merger is squeezed as
 # (fraction of the inspiral left) ** CHIRP_WARP, so the dot crawls through
@@ -593,10 +602,10 @@ class MergerOnSensitivityPlot(BlackHoleMerger):
         self.beside_ligo = True
         remnant = super().merge(sheet, clock, gain)
         self.beside_ligo = False
-        self.video.clear_updaters()
+        self.ligo.clear_updaters()
         self.trace.clear_updaters()
         self.play(
-            FadeOut(remnant), FadeOut(self.video), FadeOut(self.trace),
+            FadeOut(remnant), FadeOut(self.ligo), FadeOut(self.trace),
             gain.animate.set_value(0.0), run_time=1.5,
         )
         clock.set_value(0.0)  # the sheet is flat whatever the clock says
@@ -608,28 +617,31 @@ class MergerOnSensitivityPlot(BlackHoleMerger):
         else:
             self.show_plot(clock)
 
-    def entrance(self):
-        """LIGO on the right, still on its first frame until show_ligo."""
-        pixels = round(config.pixel_width * LIGO_VIDEO_WIDTH / config.frame_width)
-        self.video = VideoFrame(StreamedFrames(LIGO_VIDEO, width=pixels))
-        self.video.set(width=LIGO_VIDEO_WIDTH).move_to(LIGO_VIDEO_CENTER)
-        self.add_fixed_in_frame_mobjects(self.video)
-        return [FadeIn(self.video, run_time=1.5)]
+    def entrance(self, clock):
+        """LIGO on the right, lit, standing still until the clock runs."""
+        labels, optics, arm_tags = make_apparatus(clock, ligo_strain, LIGO_PANEL)
+        on = ValueTracker(1.0)  # the beams are lit all the way from the start
+        glow, lights = make_light(clock, on, on, ligo_strain, LIGO_PANEL)
+        return_axes, return_waves, sum_axes, sum_wave = returning_waves(
+            clock, ligo_strain, LIGO_PANEL
+        )
+        trace_axes, trace = make_strain_trace(
+            clock, ligo_strain, LIGO_TRACE_SPAN, LIGO_PANEL
+        )
+        # light under the optics, the glow under the detector
+        self.ligo = VGroup(
+            labels, glow, lights, optics, arm_tags,
+            return_axes, return_waves, sum_axes, sum_wave,
+            trace_axes, trace, *make_equation(LIGO_PANEL),
+        )
+        self.add_fixed_in_frame_mobjects(self.ligo)
+        return [FadeIn(self.ligo, run_time=1.5)]
 
     def show_ligo(self, clock):
-        """The chirp strip under the sheet, and LIGO starting to run."""
-        lead = ValueTracker(0.0)
-        video = self.video
-        rate = video.frames.rate
-        video.add_updater(
-            lambda m: m.show(round((lead.get_value() + clock.get_value()) * rate))
-        )
+        """The chirp strip under the sheet; LIGO is already up."""
         self.trace = make_trace(clock, SIDE_TRACE_CENTER, SIDE_TRACE_WIDTH)
         self.add_fixed_in_frame_mobjects(self.trace)
-        self.play(
-            FadeIn(self.trace), lead.animate.set_value(LIGO_VIDEO_LEAD),
-            rate_func=linear, run_time=LIGO_VIDEO_LEAD,
-        )
+        self.play(FadeIn(self.trace), run_time=0.8)
 
     def show_plot(self, clock):
         axes, frame = sensitivity_axes(

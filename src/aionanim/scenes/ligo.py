@@ -10,16 +10,15 @@ cancelling, and light reaches the detector.
 
 Everything runs off one lab clock, `now`, so the light keeps flowing through
 every beat of the scene. Everything visual comes from aionanim.style.
+
+The builders take the wave as `h` and a `panel` to draw into, so another
+scene can set the interferometer, already lit, in part of its own frame and
+drive it with a wave of its own (MergerOnSensitivityPlot does both).
 """
 
 import numpy as np
 from manim import *
 
-from aionanim.scenes.gravitational_waves import (
-    LIGO_VIDEO_LEAD,
-    T_END as MERGER_END,
-    observed_strain,
-)
 from aionanim.style import *
 from aionanim.tools.primitives import make_guide
 
@@ -100,6 +99,30 @@ def strain(t):
         return 0.0
     envelope = np.sin(PI * s / GW_DURATION) ** 2
     return envelope * np.sin(TAU * s / GW_PERIOD)
+
+
+class Panel:
+    """Where the drawing goes: shrunk by `scale` about the origin (strokes
+    too), then moved by `shift`. The default leaves it filling the frame."""
+
+    def __init__(self, scale=1.0, shift=ORIGIN):
+        self.scale = scale
+        self.shift = np.asarray(shift, dtype=float)
+
+    def point(self, p):
+        return self.scale * np.asarray(p, dtype=float) + self.shift
+
+    def __call__(self, mob):
+        if self.scale != 1.0:
+            mob.scale(self.scale, scale_stroke=True, about_point=ORIGIN)
+        return mob.shift(self.shift)
+
+    def redraw(self, draw):
+        """always_redraw, with each redrawn mobject placed."""
+        return always_redraw(lambda: self(draw()))
+
+
+FULL_FRAME = Panel()
 
 
 # Everything the wave drives takes the strain as `h`, a function of lab time
@@ -197,7 +220,7 @@ def detector_glow(now, h=strain):
     ).move_to(DETECTOR)
 
 
-def make_strain_trace(now, h=strain, span=TRACE_T):
+def make_strain_trace(now, h=strain, span=TRACE_T, panel=FULL_FRAME):
     """h(t) drawn out as it arrives, with a dot on the present; the panel
     spans the stretch `span` of lab time."""
     zero = DashedLine(
@@ -224,7 +247,7 @@ def make_strain_trace(now, h=strain, span=TRACE_T):
             color=lighten(STRAIN_COLOR),
         )
 
-    return VGroup(zero, tag), VGroup(always_redraw(curve), always_redraw(marker))
+    return panel(VGroup(zero, tag)), VGroup(panel.redraw(curve), panel.redraw(marker))
 
 
 def make_ring(now):
@@ -261,7 +284,7 @@ def make_ring(now):
     return VGroup(rest, caption), always_redraw(dots)
 
 
-def returning_waves(now, h=strain):
+def returning_waves(now, h=strain, panel=FULL_FRAME):
     """The light back from each arm, overlaid where the two recombine.
 
     E_x = sin(ku - wt + dphi/2) and E_y = -sin(ku - wt - dphi/2): the splitter
@@ -276,7 +299,7 @@ def returning_waves(now, h=strain):
             return VMobject(stroke_color=color, stroke_width=width).set_points_as_corners(
                 np.column_stack([PANEL_X[0] + u, y + field(u, t), 0 * u])
             )
-        return always_redraw(draw)
+        return panel.redraw(draw)
 
     def carrier(u, t):
         return K_INSET * u - OMEGA_INSET * t
@@ -304,9 +327,9 @@ def returning_waves(now, h=strain):
     ).move_to([np.mean(PANEL_X), SUM_Y + 2 * RETURN_AMPLITUDE + 0.3, 0])
 
     return (
-        VGroup(zero_return, key),
+        panel(VGroup(zero_return, key)),
         VGroup(row(RETURN_Y, e_x, X_ARM_COLOR), row(RETURN_Y, e_y, Y_ARM_COLOR)),
-        VGroup(zero_sum, sum_tag),
+        panel(VGroup(zero_sum, sum_tag)),
         row(SUM_Y, lambda u, t: e_x(u, t) + e_y(u, t), OUTPUT_COLOR, 4),
     )
 
@@ -319,10 +342,10 @@ def run(scene, now, to, *anims):
     )
 
 
-def make_apparatus(now, h=strain):
+def make_apparatus(now, h=strain, panel=FULL_FRAME):
     """The title, the optics and their labels, with the test masses riding
-    the wave. Returns (everything, the optics that go over the light,
-    the arm labels)."""
+    the wave. Returns (the title and labels, the optics, which go over the
+    light, the arm labels)."""
     title = Tex(
         "LIGO: a Michelson interferometer", font_size=FONT_TITLE
     ).to_corner(UL)
@@ -331,8 +354,6 @@ def make_apparatus(now, h=strain):
     detector = make_detector()
     x_mirror = make_mirror(vertical=True).move_to(X_END)
     y_mirror = make_mirror(vertical=False).move_to(Y_END)
-    x_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value(), h)[0]))
-    y_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value(), h)[1]))
     # where each test mass hangs at rest, so its motion reads against something
     x_rest = make_guide(X_END + UP * 0.7, X_END + DOWN * 0.7)
     y_rest = make_guide(Y_END + LEFT * 0.7, Y_END + RIGHT * 0.7)
@@ -356,15 +377,18 @@ def make_apparatus(now, h=strain):
             BS + UP * ARM / 2 + LEFT * 0.5
         ),
     )
-    optics = VGroup(splitter, x_mirror, y_mirror, detector, laser)
-    everything = VGroup(
-        title, laser, splitter, splitter_tag, detector, x_mirror, y_mirror,
-        x_rest, y_rest, mass_tags,
+    optics = panel(VGroup(splitter, x_mirror, y_mirror, detector, laser))
+    labels = panel(VGroup(title, splitter_tag, x_rest, y_rest, mass_tags))
+    x_mirror.add_updater(
+        lambda m: m.move_to(panel.point(mirror_positions(now.get_value(), h)[0]))
     )
-    return everything, optics, arm_tags
+    y_mirror.add_updater(
+        lambda m: m.move_to(panel.point(mirror_positions(now.get_value(), h)[1]))
+    )
+    return labels, optics, panel(arm_tags)
 
 
-def make_light(now, lit_in, lit_arm, h=strain):
+def make_light(now, lit_in, lit_arm, h=strain, panel=FULL_FRAME):
     """The beams, chained so their phase runs on from one to the next, and
     the glow on the detector. `lit_in` and `lit_arm` say how far the light
     has got down the input beam and the arms."""
@@ -402,24 +426,24 @@ def make_light(now, lit_in, lit_arm, h=strain):
         ).set_stroke(opacity=abs(share))
 
     lights = VGroup(
-        always_redraw(lambda: beam(LASER, BS, lit_in.get_value())),
-        always_redraw(arm_beam(0)),
-        always_redraw(arm_beam(1)),
-        always_redraw(lambda: beam(BS, DETECTOR, opacity=output_share() ** 2)),
-        always_redraw(lambda: input_wave().set_stroke(
+        panel.redraw(lambda: beam(LASER, BS, lit_in.get_value())),
+        panel.redraw(arm_beam(0)),
+        panel.redraw(arm_beam(1)),
+        panel.redraw(lambda: beam(BS, DETECTOR, opacity=output_share() ** 2)),
+        panel.redraw(lambda: input_wave().set_stroke(
             LASER_COLOR, BEAM_STROKE_WIDTH)),
-        always_redraw(lambda: arm_wave(0)().set_stroke(
+        panel.redraw(lambda: arm_wave(0)().set_stroke(
             LASER_COLOR, BEAM_STROKE_WIDTH)),
-        always_redraw(lambda: arm_wave(1)().set_stroke(
+        panel.redraw(lambda: arm_wave(1)().set_stroke(
             LASER_COLOR, BEAM_STROKE_WIDTH)),
-        always_redraw(lambda: output_wave().set_stroke(
+        panel.redraw(lambda: output_wave().set_stroke(
             LASER_COLOR, BEAM_STROKE_WIDTH)),
     )
-    glow = always_redraw(lambda: detector_glow(now, h))
+    glow = panel.redraw(lambda: detector_glow(now, h))
     return glow, lights
 
 
-def make_equation():
+def make_equation(panel=FULL_FRAME):
     """Delta phi in the arm lengths, then in h, under the readout panel; and
     the scale of the real thing under that."""
     readout = MathTex(
@@ -438,7 +462,7 @@ def make_equation():
         r"\ \Rightarrow\ \Delta L \sim 10^{-18}\,\mathrm{m}",
         font_size=FONT_LEGEND - 6, color=lighten(GUIDE_COLOR),
     ).next_to(VGroup(readout, in_h), DOWN, buff=0.35)
-    return readout, in_h, scale
+    return panel(readout), panel(in_h), panel(scale)
 
 
 class LIGOMichelson(Scene):
@@ -450,8 +474,8 @@ class LIGOMichelson(Scene):
         lit_arm = ValueTracker(0.0)
 
         # --- the apparatus ---
-        apparatus, optics, arm_tags = make_apparatus(now)
-        self.play(FadeIn(apparatus), run_time=1.2)
+        labels, optics, arm_tags = make_apparatus(now)
+        self.play(FadeIn(labels), FadeIn(optics), run_time=1.2)
 
         # --- the light ---
         glow, lights = make_light(now, lit_in, lit_arm)
@@ -490,45 +514,3 @@ class LIGOMichelson(Scene):
         run(self, now, GW_OFF)
         run(self, now, GW_OFF + 1.0, FadeIn(scale))
         run(self, now, T_END)
-
-
-# --- LIGO beside the merger -------------------------------------------------
-# MergerOnSensitivityPlot plays this, as a video, beside the first run of the
-# merger (see data_scripts/render_ligo_michelson.py). The wave is the
-# merger's own chirp, so the test masses swing and the detector brightens in
-# step with the sheet; everything is set up from the first frame, so none of
-# the merger is spent building the interferometer, and the ring of free
-# masses is left out. Lab time here is the merger's clock plus
-# LIGO_VIDEO_LEAD: the video runs that far ahead, with no wave yet, while the
-# holes settle into the sheet.
-MERGER_PEAK = np.max(np.abs(observed_strain(np.linspace(0.0, MERGER_END, 20001))))
-
-
-def merger_strain(t):
-    """The merger's h at lab time t, normalised to a peak of 1."""
-    return observed_strain(t - LIGO_VIDEO_LEAD) / MERGER_PEAK
-
-
-# the whole run to the settled sheet, and a little over
-MERGER_SPAN = (LIGO_VIDEO_LEAD - 0.3, LIGO_VIDEO_LEAD + MERGER_END + 0.3)
-MERGER_VIDEO_END = LIGO_VIDEO_LEAD + MERGER_END + 3.0
-
-
-class LIGODuringMerger(Scene):
-    """The interferometer, lit and read out from the first frame, as the
-    merger's chirp passes."""
-
-    def construct(self):
-        now = ValueTracker(0.0)
-        h = merger_strain
-        apparatus, optics, arm_tags = make_apparatus(now, h)
-        glow, lights = make_light(now, ValueTracker(1.0), ValueTracker(1.0), h)
-        return_axes, return_waves, sum_axes, sum_wave = returning_waves(now, h)
-        trace_axes, trace = make_strain_trace(now, h, MERGER_SPAN)
-        readout, in_h, scale = make_equation()
-        self.add(
-            apparatus, glow, lights, *optics, arm_tags,
-            return_axes, return_waves, sum_axes, sum_wave,
-            trace_axes, trace, readout, in_h, scale,
-        )
-        run(self, now, MERGER_VIDEO_END)
