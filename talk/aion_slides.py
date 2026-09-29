@@ -647,7 +647,7 @@ class Aion10BeecroftSlide(DeckSlide):
         baseline = load_image(MEDIA / "baseline.png", height=5.2)
         stairwell = load_image(MEDIA / "stairwell.jpg", height=4.9)
         building = load_image(MEDIA / "beecroft.jpeg", height=config.frame_height - 0.4)
-        Group(baseline, stairwell, building).arrange(RIGHT, buff=0.7).set_x(0.2)
+        Group(baseline, building, stairwell).arrange(RIGHT, buff=0.7).set_x(0.2)
         baseline.set_y(-0.45)
         stairwell.set_y(-0.45)
         building.set_y(0)
