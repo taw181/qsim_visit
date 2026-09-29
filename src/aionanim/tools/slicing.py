@@ -117,14 +117,20 @@ class VelocityPlot(VGroup):
         return self.axes.c2p(u - SLICE_U_RANGE[0], y)
 
     def _points(self, u, y):
-        return [self.c2p(a, b) for a, b in zip(u, y)]
+        # The axes are linear, so c2p is affine: three calls rather than one
+        # per sample (per sample, the band updater was most of the render).
+        origin = self.c2p(0, 0)
+        du = self.c2p(1, 0) - origin
+        dy = self.c2p(0, 1) - origin
+        return origin + np.outer(u, du) + np.outer(y, dy)
 
     def _curve(self, y, **style):
         return VMobject(**style).set_points_smoothly(self._points(self.u, y))
 
     def _band(self, band, lower, upper):
-        pts = self._points(self.u, upper) + self._points(self.u[::-1], lower[::-1])
-        band.set_points_as_corners(pts + [pts[0]])
+        pts = np.concatenate([self._points(self.u, upper),
+                              self._points(self.u[::-1], lower[::-1])])
+        band.set_points_as_corners(np.concatenate([pts, pts[:1]]))
 
     def _fill(self):
         excited = self.g * self.p * self.excite.get_value()
