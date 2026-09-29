@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 from aionanim.plots.dai_fringes import (
     adev_figure,
+    deck_fonts,
     fringes_figure,
     lissajous_figure,
     load,
@@ -58,4 +59,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with deck_fonts():
+        main()

@@ -382,6 +382,7 @@ class MergerOnSensitivityPlotSlide(Clicks, MergerOnSensitivityPlot):
     The left panel becomes real LIGO data at the end, so its citation joins
     the detector paper under the same "LIGO" label."""
 
+    TITLE = r"LIGO's first GW detection"
     CITE = (LIGO_PAPER, *MERGER_PAPERS)
     CITE_CORNER = DR  # under the plot, clear of the LIGO figure's time axis
 
@@ -401,6 +402,10 @@ class SensitivityLandscapeSlide(Clicks, SensitivityBuildUp):
     """The landscape without AEDGE: AION's three stages fill the gap."""
 
     GAP_FILLERS = ("AION-10", "AION-100", "AION-km")
+    TITLE = r"Gravitational wave sensitivity landscape"
+    # brought down under the title, and up off the citation lines
+    PLOT_ORIGIN = np.array([-4.9, -2.45, 0.0])
+    PLOT_HEIGHT = 5.3
     CITE = (
         LIGO_PAPER,
         ("LISA", "LISA:2017pwj"),
@@ -408,7 +413,6 @@ class SensitivityLandscapeSlide(Clicks, SensitivityBuildUp):
         ("AION-10/100/km", "badurinaAIONAtomInterferometer2020"),
         *MERGER_PAPERS,
     )
-    CITE_CORNER = UR  # the plot fills the slide down to its axis label
 
 
 class GradiometerGWStretchSlide(Clicks, GradiometerGWStretchContinuous):
@@ -531,7 +535,8 @@ class AIONChambersSlide(DeckSlide):
 
     def construct(self):
         title = slide_title(r"AION chambers across the UK")
-        figure = load_image(MEDIA / "aion_chambers.png", height=6.9)
+        # ends above the citation line rather than under it
+        figure = load_image(MEDIA / "aion_chambers.png", height=6.3)
         figure.next_to(title, DOWN, buff=0.25).set_x(0)
         self.play(FadeIn(title), FadeIn(figure), run_time=0.8)
 
@@ -574,6 +579,7 @@ class LightShiftSignalSlide(Clicks, LightShiftSignalContinuous):
     dials."""
 
     CITE = (DAI_PAPER,)
+    CITE_CORNER = UR  # bottom left is the laser's label
 
     # the image's two columns, as fractions of its width from the left
     IMAGE_COLUMNS = {"S": (0.27, ATOM_COLOR), "P": (0.78, KICKED_COLOR)}
@@ -697,6 +703,11 @@ class AICECernSlide(DeckSlide):
     marked on it and what it is for in a box under the title."""
 
     CITE = ("arduiniTechnicalProposalAtom2026",)
+
+    def citation(self):
+        # the figure runs edge to edge, so the line sits on the photo: outlined
+        # in the background colour, as the slide number is
+        return super().citation().set_stroke(PLOT_BACKGROUND, width=4, background=True)
 
     def construct(self):
         figure = load_image(MEDIA / "aice.png", width=config.frame_width)
