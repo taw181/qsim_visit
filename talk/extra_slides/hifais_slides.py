@@ -24,7 +24,7 @@ from aionanim.scenes.hifais import HighFluxLoading  # noqa: E402
 
 
 class HighFluxLoadingSlide(Clicks, HighFluxLoading):
-    """A click once the chamber is up, once the source is running beside the
-    empty plot, and once the MOT has loaded; then the loading rate."""
+    """A click once the chamber is up, and once the dimensioned top view is
+    beside the loading curves; then the loading rate."""
 
     CITE = ("walkerHighfluxSourceCold2026",)
