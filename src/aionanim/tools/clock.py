@@ -287,14 +287,20 @@ def draw_ports(scene, origin, length, p_ground, slope=CP_SLOPE, labels=True,
 
     `extra` is draw_legs' hook, passed straight through. The continuous scenes
     go through fly_ports instead, which is this with the clock kept running.
+
+    Returns what it put on the scene bar the labels -- the atoms, their
+    trails, any empty guide -- for live_ports to take over.
     """
+    before = set(scene.mobjects)
     empty, legs, tags = port_parts(scene, origin, length, p_ground, slope)
     if len(empty):
         scene.play(FadeIn(empty), run_time=0.5)
     if legs:
         draw_legs(scene, legs, extra=extra)
+    drawn = [m for m in scene.mobjects if m not in before]
     if labels:
         scene.play(FadeIn(tags), run_time=0.6)
+    return drawn
 
 
 def port_parts(scene, origin, length, p_ground, slope=CP_SLOPE):
@@ -322,6 +328,39 @@ def port_parts(scene, origin, length, p_ground, slope=CP_SLOPE):
             legs.append((atom, origin, end, color))
         tags.add(label)
     return empty, legs, tags
+
+
+def live_ports(scene, drawn, origin, length, share, slope=CP_SLOPE):
+    """Keep ports draw_ports has already flown in step with the phase.
+
+    For a phase picked up after the ports are out -- a scene that shows an
+    effect once the readout is on the page, without replaying the sequence.
+    `drawn` is what draw_ports returned (the atoms, their trails and any
+    empty guide); they are swapped for the same finished picture,
+    redrawn every frame from `share`, a function returning the ground share,
+    so the split follows the hands as they sweep. Labels, if any, stay put.
+    """
+    def ports():
+        p_ground = share()
+        group = VGroup()
+        for direction, color, p in (
+            (RIGHT, ATOM_COLOR, p_ground),
+            (RIGHT + UP * slope, KICKED_COLOR, 1.0 - p_ground),
+        ):
+            end = origin + direction * length
+            if p < PORT_EMPTY:
+                group.add(make_guide(origin, end))
+            else:
+                group.add(
+                    Line(origin, end, color=color, **TRAJECTORY_STYLE),
+                    make_atom(color, radius=CLOCK_ATOM_RADIUS, opacity=p).move_to(end),
+                )
+        return group
+
+    scene.remove(*drawn)
+    live = always_redraw(ports)
+    scene.add(live)
+    return live
 
 
 def fly_ports(scene, ports, length, labels=True, extra=()):

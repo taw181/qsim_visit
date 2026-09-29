@@ -16,6 +16,7 @@ from aionanim.tools.clock import (
     draw_ports,
     leg_slope,
     ground_share,
+    live_ports,
     make_clock_hand,
     make_dial,
     phase_sweep,
@@ -50,7 +51,7 @@ from aionanim.tools.primitives import (
 # on further than the lower. Generic on purpose, as on the clock slide.
 GR_EFFECT_SPAN = (0.25, 0.75)  # of the second leg
 GR_EFFECT_PAD = 0.2  # the boxes' reach above and below each interferometer
-GR_EFFECT_PHASE = {"low": 0.45, "up": 1.0}
+GR_EFFECT_PHASE = {"low": 1.0, "up": 2.1}  # |e> ports: ~23% and ~75%
 GR_EFFECT_TIME = 2.5
 
 
@@ -194,8 +195,9 @@ class Gradiometer(Scene):
         # send everything into |g, p> -- the null the wave has to break, drawn
         # against an empty excited port so that it reads as one.
         self.remove(*atoms["low"], *atoms["up"], *hands)
+        ports = {}
         for cloud, v in (("low", low), ("up", up)):
-            draw_ports(
+            ports[cloud] = draw_ports(
                 self, v[3], GR_OUT,
                 ground_share(phase[cloud][1], phase[cloud][0]),
                 slope=leg_slope(v[1], v[3]), labels=False,
@@ -215,7 +217,9 @@ class Gradiometer(Scene):
         # --- some effect on the atoms -----------------------------------------
         # Not replayed: a box on each interferometer, and the hand of the arm
         # excited there (the one kicked at the mirror) sweeping on by what it
-        # picked up, while a line crosses each box.
+        # picked up, while a line crosses each box. The ports follow the
+        # hands, so each interferometer's excited port fills in by its own
+        # amount -- the two splits come out unequal.
         boxes, cursors, sweeps = VGroup(), VGroup(), []
         for cloud, v, z in (("low", low, GR_LOWER_Z), ("up", up, GR_UPPER_Z)):
             start, end = (v[1][0] + f * (v[3][0] - v[1][0]) for f in GR_EFFECT_SPAN)
@@ -238,6 +242,12 @@ class Gradiometer(Scene):
         self.play(FadeIn(boxes), FadeIn(box_label), run_time=0.8)
         self.bring_to_back(boxes)
         self.add(*sweeps)
+        for cloud, v in (("low", low), ("up", up)):
+            live_ports(
+                self, ports[cloud], v[3], GR_OUT,
+                lambda c=cloud: ground_share(phase[c][1], phase[c][0]),
+                slope=leg_slope(v[1], v[3]),
+            )
         self.play(
             *[phase[c][0].animate.increment_value(GR_EFFECT_PHASE[c])
               for c in ("low", "up")],

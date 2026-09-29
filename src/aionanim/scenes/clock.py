@@ -29,6 +29,8 @@ from aionanim.tools.clock import (
     dial_hand,
     draw_ports,
     fire_vertical_pulse,
+    ground_share,
+    live_ports,
     make_clock_hand,
     make_dial,
     phase_sweep,
@@ -205,7 +207,7 @@ class ClockPhase(Scene):
         # the upper one phi_1 - 2 phi_2 + phi_3 ahead.
         sweep, gap = phase_sweep(CP_DIAL, kicked_first, kicked_last)
         self.play(FadeIn(sweep), run_time=0.6)
-        draw_ports(self, c, CP_OUT, 0.5 * (1 + np.cos(gap)))
+        ports = draw_ports(self, c, CP_OUT, 0.5 * (1 + np.cos(gap)))
         # bottom right, as the Mach-Zehnder has it: the bottom left is the
         # pulses' captions
         self.play(Write(readout_equation().to_corner(DR)), run_time=1.0)
@@ -253,6 +255,9 @@ class ClockPhase(Scene):
         self.remove(sweep)
         live = always_redraw(lambda: phase_sweep(CP_DIAL, kicked_first, kicked_last)[0])
         self.add(live)
+        # and the ports re-split with it
+        live_ports(self, ports, c, CP_OUT,
+                   lambda: ground_share(kicked_first, kicked_last))
         cursor = Line(box.get_corner(DL), box.get_corner(UL),
                       color=PERTURBATION_COLOR, stroke_width=3)
         self.play(
