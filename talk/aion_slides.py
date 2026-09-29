@@ -47,7 +47,7 @@ from aionanim.scenes.dai_data import LaserNoiseLissajous
 from aionanim.scenes.dipole import DipoleTrapLoading, SignalInjection
 from aionanim.scenes.gradiometer import Gradiometer
 from aionanim.scenes.gradiometer_gw import GradiometerGWStretchContinuous
-from aionanim.scenes.gravitational_waves import BlackHoleMerger, MergerOnSensitivityPlot
+from aionanim.scenes.gravitational_waves import MergerOnSensitivityPlot
 from aionanim.scenes.gw_landscape import SensitivityBuildUp
 from aionanim.scenes.light_shift import LightShiftSignalContinuous
 from aionanim.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
@@ -332,11 +332,6 @@ class GradiometerSlide(Clicks, Gradiometer):
 # --- motivation: gravitational waves, then dark matter ---------------------
 class MotivationSlide(SectionSlide):
     SECTION = r"Motivation"
-
-
-class BlackHoleMergerSlide(DeckSlide, BlackHoleMerger):
-    """No stops: the merger plays straight through from the moment the slide
-    comes up, and holds on the settled sheet as the slide's own end."""
 
 
 # The sensitivity curves are digitised from an internal AION figure, whose
