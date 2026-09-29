@@ -45,7 +45,7 @@ from aionanim.scenes.clock import ClockPhaseTerms
 from aionanim.scenes.cooling import CoolingSequence
 from aionanim.scenes.dai_data import LaserNoiseLissajous
 from aionanim.scenes.dipole import DipoleTrapLoading, SignalInjection
-from aionanim.scenes.gradiometer import Gradiometer
+from aionanim.scenes.gradiometer import GradiometerContinuous
 from aionanim.scenes.gradiometer_gw import GradiometerGWStretchContinuous
 from aionanim.scenes.gravitational_waves import MergerOnSensitivityPlot
 from aionanim.scenes.gw_landscape import SensitivityBuildUp
@@ -334,7 +334,7 @@ class ClockPhaseTermsSlide(Clicks, ClockPhaseTerms):
     pass
 
 
-class GradiometerSlide(Clicks, Gradiometer):
+class GradiometerSlide(Clicks, GradiometerContinuous):
     pass
 
 
