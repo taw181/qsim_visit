@@ -1,7 +1,8 @@
 """The Freiburg talk, without bash (Windows): render, present or convert the deck.
 
-    uv run talk/deck.py render [-j N] [l|m|h] [Slide ...]   # default h; all slides, or just those named;
-                                                            # -j N renders N slides at once (logs in media/deck_logs/)
+    uv run talk/deck.py render [-j N] [-f FPS] [l|m|h] [Slide ...]   # default h; all slides, or just those named;
+                                                            # -j N renders N slides at once (logs in media/deck_logs/);
+                                                            # -f FPS frame rate, default 30 (l keeps its 15)
     uv run talk/deck.py present
     uv run talk/deck.py html                                # aion_talk.html, one standalone file
 
@@ -33,12 +34,16 @@ def manim_slides(*args, sync=True, **kwargs):
     return subprocess.run([*uv, "manim-slides", *args], cwd=ROOT, env=ENV, **kwargs).returncode
 
 
-def render(jobs, args):
+def render(jobs, fps, args):
     quality = args.pop(0) if args and args[0] in QUALITIES else "h"
+    # 30 fps unless asked otherwise: slide animations don't need 60, and
+    # it halves the frames at h. l keeps its own 15.
+    fps = fps or (15 if quality == "l" else 30)
     slides = args or deck()
     # -q h, not -qh: manim-slides reads the h of -qh as --help.
+    quality_args = ["-q", quality, "--fps", str(fps)]
     if jobs == 1:
-        return manim_slides("render", "-q", quality, SLIDES, *slides)
+        return manim_slides("render", *quality_args, SLIDES, *slides)
 
     # Cairo renders on one core, so run one process per slide, each
     # logging to media/deck_logs/<Slide>.log rather than interleaving.
@@ -49,7 +54,7 @@ def render(jobs, args):
     def render_one(slide):
         log = logs / f"{slide}.log"
         with open(log, "wb") as out:
-            rc = manim_slides("render", "-q", quality, SLIDES, slide, sync=False,
+            rc = manim_slides("render", *quality_args, SLIDES, slide, sync=False,
                               stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
         print(f"done    {slide}" if rc == 0 else
               f"FAILED  {slide}  (see {log.relative_to(ROOT).as_posix()})", flush=True)
@@ -64,11 +69,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=["render", "present", "html"])
     parser.add_argument("-j", type=int, default=1, metavar="N", help="render: N slides at once")
+    parser.add_argument("-f", type=float, metavar="FPS", help="render: frame rate (default 30; l keeps its 15)")
     parser.add_argument("args", nargs="*", help="render: [l|m|h] [Slide ...]")
     opts = parser.parse_args()
 
     if opts.command == "render":
-        return render(opts.j, opts.args)
+        return render(opts.j, opts.f, opts.args)
     if opts.command == "present":
         return manim_slides("present", *deck())
     return manim_slides("convert", *deck(), "aion_talk.html", "--to", "html", "--one-file")

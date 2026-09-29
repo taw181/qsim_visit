@@ -149,6 +149,9 @@ class DeckSlide(Slide):
     as "label: Author et al. (year)". CITE_CORNER moves it off something the
     footer would cover.
 
+    Slides are rendered without reversed copies (skip_reversing), so stepping
+    back replays a slide forwards.
+
     Looping slides are left without the settling hold: their last frame is
     their first, so the one manim leaves out is the one a loop would repeat.
 
@@ -161,6 +164,9 @@ class DeckSlide(Slide):
     CITE = ()
     CITE_FORMAT = CITE_FORMAT
     CITE_CORNER = DL
+    # no reversed copy of each slide: it costs a re-encode, and stepping back
+    # through the deck then replays a slide forwards instead
+    skip_reversing = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
