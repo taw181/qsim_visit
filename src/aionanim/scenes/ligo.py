@@ -15,6 +15,11 @@ every beat of the scene. Everything visual comes from aionanim.style.
 import numpy as np
 from manim import *
 
+from aionanim.scenes.gravitational_waves import (
+    LIGO_VIDEO_LEAD,
+    T_END as MERGER_END,
+    observed_strain,
+)
 from aionanim.style import *
 from aionanim.tools.primitives import make_guide
 
@@ -97,14 +102,16 @@ def strain(t):
     return envelope * np.sin(TAU * s / GW_PERIOD)
 
 
-def phase_difference(t):
+# Everything the wave drives takes the strain as `h`, a function of lab time
+# normalised to a peak of 1, so a scene can pass a wave of its own.
+def phase_difference(t, h=strain):
     """phi_x - phi_y at the detector: 2k (L_x - L_y), which is linear in h."""
-    return PHASE_GAIN * strain(t)
+    return PHASE_GAIN * h(t)
 
 
-def mirror_positions(t):
+def mirror_positions(t, h=strain):
     """Plus polarisation: the x arm stretches exactly as the y arm squeezes."""
-    swing = MIRROR_SWING * strain(t)
+    swing = MIRROR_SWING * h(t)
     return X_END + RIGHT * swing, Y_END + DOWN * swing
 
 
@@ -181,21 +188,18 @@ def make_detector():
     return VGroup(face, body, tag)
 
 
-def detector_glow(now):
+def detector_glow(now, h=strain):
     """Power at the detector, sin^2(dphi / 2), drawn as light pooling on it."""
-    power = np.sin(phase_difference(now.get_value()) / 2) ** 2
+    power = np.sin(phase_difference(now.get_value(), h) / 2) ** 2
     return Circle(
         radius=0.62, stroke_width=0, fill_color=LASER_COLOR,
         fill_opacity=0.7 * power,
     ).move_to(DETECTOR)
 
 
-def trace_x(t):
-    return interpolate(*PANEL_X, (t - TRACE_T[0]) / (TRACE_T[1] - TRACE_T[0]))
-
-
-def make_strain_trace(now):
-    """h(t) drawn out as it arrives, with a dot on the present."""
+def make_strain_trace(now, h=strain, span=TRACE_T):
+    """h(t) drawn out as it arrives, with a dot on the present; the panel
+    spans the stretch `span` of lab time."""
     zero = DashedLine(
         [PANEL_X[0], TRACE_Y, 0], [PANEL_X[1], TRACE_Y, 0], **GUIDE_STYLE
     )
@@ -204,18 +208,19 @@ def make_strain_trace(now):
     )
 
     def at(t):
-        return [trace_x(t), TRACE_Y + TRACE_AMPLITUDE * strain(t), 0]
+        x = interpolate(*PANEL_X, (t - span[0]) / (span[1] - span[0]))
+        return [x, TRACE_Y + TRACE_AMPLITUDE * h(t), 0]
 
     def curve():
-        t_now = float(np.clip(now.get_value(), *TRACE_T))
-        ts = np.linspace(TRACE_T[0], max(t_now, TRACE_T[0] + 1e-3), 300)
+        t_now = float(np.clip(now.get_value(), *span))
+        ts = np.linspace(span[0], max(t_now, span[0] + 1e-3), 300)
         return VMobject(
             stroke_color=STRAIN_COLOR, stroke_width=STRAIN_STROKE_WIDTH
         ).set_points_as_corners([at(t) for t in ts])
 
     def marker():
         return Dot(
-            at(float(np.clip(now.get_value(), *TRACE_T))), radius=0.07,
+            at(float(np.clip(now.get_value(), *span))), radius=0.07,
             color=lighten(STRAIN_COLOR),
         )
 
@@ -256,7 +261,7 @@ def make_ring(now):
     return VGroup(rest, caption), always_redraw(dots)
 
 
-def returning_waves(now):
+def returning_waves(now, h=strain):
     """The light back from each arm, overlaid where the two recombine.
 
     E_x = sin(ku - wt + dphi/2) and E_y = -sin(ku - wt - dphi/2): the splitter
@@ -277,10 +282,10 @@ def returning_waves(now):
         return K_INSET * u - OMEGA_INSET * t
 
     def e_x(u, t):
-        return RETURN_AMPLITUDE * np.sin(carrier(u, t) + phase_difference(t) / 2)
+        return RETURN_AMPLITUDE * np.sin(carrier(u, t) + phase_difference(t, h) / 2)
 
     def e_y(u, t):
-        return -RETURN_AMPLITUDE * np.sin(carrier(u, t) - phase_difference(t) / 2)
+        return -RETURN_AMPLITUDE * np.sin(carrier(u, t) - phase_difference(t, h) / 2)
 
     zero_return = DashedLine(
         [PANEL_X[0], RETURN_Y, 0], [PANEL_X[1], RETURN_Y, 0], **GUIDE_STYLE
@@ -314,6 +319,128 @@ def run(scene, now, to, *anims):
     )
 
 
+def make_apparatus(now, h=strain):
+    """The title, the optics and their labels, with the test masses riding
+    the wave. Returns (everything, the optics that go over the light,
+    the arm labels)."""
+    title = Tex(
+        "LIGO: a Michelson interferometer", font_size=FONT_TITLE
+    ).to_corner(UL)
+    laser = make_laser()
+    splitter = make_splitter()
+    detector = make_detector()
+    x_mirror = make_mirror(vertical=True).move_to(X_END)
+    y_mirror = make_mirror(vertical=False).move_to(Y_END)
+    x_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value(), h)[0]))
+    y_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value(), h)[1]))
+    # where each test mass hangs at rest, so its motion reads against something
+    x_rest = make_guide(X_END + UP * 0.7, X_END + DOWN * 0.7)
+    y_rest = make_guide(Y_END + LEFT * 0.7, Y_END + RIGHT * 0.7)
+
+    splitter_tag = Tex(
+        "beam splitter", font_size=FONT_LEGEND, color=OPTIC_COLOR
+    ).next_to(BS, DL, buff=0.4)
+    mass_tags = VGroup(
+        Tex("test mass", font_size=FONT_LEGEND, color=OPTIC_COLOR).next_to(
+            X_END, DOWN, buff=0.85
+        ),
+        Tex("test mass", font_size=FONT_LEGEND, color=OPTIC_COLOR).next_to(
+            Y_END, RIGHT, buff=0.85
+        ),
+    )
+    arm_tags = VGroup(
+        MathTex("L_x", font_size=FONT_STATE, color=lighten(X_ARM_COLOR)).move_to(
+            BS + RIGHT * ARM / 2 + DOWN * 0.45
+        ),
+        MathTex("L_y", font_size=FONT_STATE, color=lighten(Y_ARM_COLOR)).move_to(
+            BS + UP * ARM / 2 + LEFT * 0.5
+        ),
+    )
+    optics = VGroup(splitter, x_mirror, y_mirror, detector, laser)
+    everything = VGroup(
+        title, laser, splitter, splitter_tag, detector, x_mirror, y_mirror,
+        x_rest, y_rest, mass_tags,
+    )
+    return everything, optics, arm_tags
+
+
+def make_light(now, lit_in, lit_arm, h=strain):
+    """The beams, chained so their phase runs on from one to the next, and
+    the glow on the detector. `lit_in` and `lit_arm` say how far the light
+    has got down the input beam and the arms."""
+    input_length = np.linalg.norm(BS - LASER)
+
+    def carrier():
+        return -OMEGA_LIGHT * now.get_value()
+
+    def input_wave():
+        return wave(LASER, BS, LIGHT_AMPLITUDE, carrier(), lit_in.get_value())
+
+    def arm_wave(end_index):
+        def draw():
+            end = mirror_positions(now.get_value(), h)[end_index]
+            return wave(
+                BS, end, LIGHT_AMPLITUDE, carrier() + K_LIGHT * input_length,
+                lit_arm.get_value(),
+            )
+        return draw
+
+    def arm_beam(end_index):
+        return lambda: beam(
+            BS, mirror_positions(now.get_value(), h)[end_index], lit_arm.get_value()
+        )
+
+    def output_share():
+        """The field at the detector, relative to full brightness."""
+        return np.sin(phase_difference(now.get_value(), h) / 2)
+
+    def output_wave():
+        share = output_share()
+        return wave(
+            BS, DETECTOR, LIGHT_AMPLITUDE * share,
+            carrier() + K_LIGHT * (input_length + 2 * ARM),
+        ).set_stroke(opacity=abs(share))
+
+    lights = VGroup(
+        always_redraw(lambda: beam(LASER, BS, lit_in.get_value())),
+        always_redraw(arm_beam(0)),
+        always_redraw(arm_beam(1)),
+        always_redraw(lambda: beam(BS, DETECTOR, opacity=output_share() ** 2)),
+        always_redraw(lambda: input_wave().set_stroke(
+            LASER_COLOR, BEAM_STROKE_WIDTH)),
+        always_redraw(lambda: arm_wave(0)().set_stroke(
+            LASER_COLOR, BEAM_STROKE_WIDTH)),
+        always_redraw(lambda: arm_wave(1)().set_stroke(
+            LASER_COLOR, BEAM_STROKE_WIDTH)),
+        always_redraw(lambda: output_wave().set_stroke(
+            LASER_COLOR, BEAM_STROKE_WIDTH)),
+    )
+    glow = always_redraw(lambda: detector_glow(now, h))
+    return glow, lights
+
+
+def make_equation():
+    """Delta phi in the arm lengths, then in h, under the readout panel; and
+    the scale of the real thing under that."""
+    readout = MathTex(
+        r"\Delta\phi", r"= 2k\,(", "L_x", "-", "L_y", ")",
+        font_size=FONT_ANNOTATION,
+    )
+    readout[2].set_color(lighten(X_ARM_COLOR))
+    readout[4].set_color(lighten(Y_ARM_COLOR))
+    in_h = MathTex(
+        r"= \frac{4\pi L}{\lambda}\, h", font_size=FONT_ANNOTATION
+    )
+    in_h.next_to(readout, DOWN, buff=0.25).align_to(readout[1], LEFT)
+    VGroup(readout, in_h).move_to([np.mean(PANEL_X), -2.4, 0])
+    scale = MathTex(
+        r"h \sim 10^{-21},\ L = 4\,\mathrm{km}"
+        r"\ \Rightarrow\ \Delta L \sim 10^{-18}\,\mathrm{m}",
+        font_size=FONT_LEGEND - 6, color=lighten(GUIDE_COLOR),
+    ).next_to(VGroup(readout, in_h), DOWN, buff=0.35)
+    return readout, in_h, scale
+
+
 class LIGOMichelson(Scene):
     """A Michelson interferometer on a dark fringe, lit up by a passing wave."""
 
@@ -323,108 +450,25 @@ class LIGOMichelson(Scene):
         lit_arm = ValueTracker(0.0)
 
         # --- the apparatus ---
-        title = Tex(
-            "LIGO: a Michelson interferometer", font_size=FONT_TITLE
-        ).to_corner(UL)
-        laser = make_laser()
-        splitter = make_splitter()
-        detector = make_detector()
-        x_mirror = make_mirror(vertical=True).move_to(X_END)
-        y_mirror = make_mirror(vertical=False).move_to(Y_END)
-        x_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value())[0]))
-        y_mirror.add_updater(lambda m: m.move_to(mirror_positions(now.get_value())[1]))
-        # where each test mass hangs at rest, so its motion reads against something
-        x_rest = make_guide(X_END + UP * 0.7, X_END + DOWN * 0.7)
-        y_rest = make_guide(Y_END + LEFT * 0.7, Y_END + RIGHT * 0.7)
+        apparatus, optics, arm_tags = make_apparatus(now)
+        self.play(FadeIn(apparatus), run_time=1.2)
 
-        splitter_tag = Tex(
-            "beam splitter", font_size=FONT_LEGEND, color=OPTIC_COLOR
-        ).next_to(BS, DL, buff=0.4)
-        mass_tags = VGroup(
-            Tex("test mass", font_size=FONT_LEGEND, color=OPTIC_COLOR).next_to(
-                X_END, DOWN, buff=0.85
-            ),
-            Tex("test mass", font_size=FONT_LEGEND, color=OPTIC_COLOR).next_to(
-                Y_END, RIGHT, buff=0.85
-            ),
-        )
-        arm_tags = VGroup(
-            MathTex("L_x", font_size=FONT_STATE, color=lighten(X_ARM_COLOR)).move_to(
-                BS + RIGHT * ARM / 2 + DOWN * 0.45
-            ),
-            MathTex("L_y", font_size=FONT_STATE, color=lighten(Y_ARM_COLOR)).move_to(
-                BS + UP * ARM / 2 + LEFT * 0.5
-            ),
-        )
-
-        self.play(
-            FadeIn(title), FadeIn(laser), FadeIn(splitter), FadeIn(splitter_tag),
-            FadeIn(detector), FadeIn(x_mirror), FadeIn(y_mirror),
-            FadeIn(x_rest), FadeIn(y_rest), FadeIn(mass_tags), run_time=1.2,
-        )
-
-        # --- the light, chained beam to beam so its phase runs on ---
-        input_length = np.linalg.norm(BS - LASER)
-
-        def carrier():
-            return -OMEGA_LIGHT * now.get_value()
-
-        def input_wave():
-            return wave(LASER, BS, LIGHT_AMPLITUDE, carrier(), lit_in.get_value())
-
-        def arm_wave(end_index):
-            def draw():
-                end = mirror_positions(now.get_value())[end_index]
-                return wave(
-                    BS, end, LIGHT_AMPLITUDE, carrier() + K_LIGHT * input_length,
-                    lit_arm.get_value(),
-                )
-            return draw
-
-        def arm_beam(end_index):
-            return lambda: beam(
-                BS, mirror_positions(now.get_value())[end_index], lit_arm.get_value()
-            )
-
-        def output_share():
-            """The field at the detector, relative to full brightness."""
-            return np.sin(phase_difference(now.get_value()) / 2)
-
-        def output_wave():
-            share = output_share()
-            return wave(
-                BS, DETECTOR, LIGHT_AMPLITUDE * share,
-                carrier() + K_LIGHT * (input_length + 2 * ARM),
-            ).set_stroke(opacity=abs(share))
-
-        lights = VGroup(
-            always_redraw(lambda: beam(LASER, BS, lit_in.get_value())),
-            always_redraw(arm_beam(0)),
-            always_redraw(arm_beam(1)),
-            always_redraw(lambda: beam(BS, DETECTOR, opacity=output_share() ** 2)),
-            always_redraw(lambda: input_wave().set_stroke(
-                LASER_COLOR, BEAM_STROKE_WIDTH)),
-            always_redraw(lambda: arm_wave(0)().set_stroke(
-                LASER_COLOR, BEAM_STROKE_WIDTH)),
-            always_redraw(lambda: arm_wave(1)().set_stroke(
-                LASER_COLOR, BEAM_STROKE_WIDTH)),
-            always_redraw(lambda: output_wave().set_stroke(
-                LASER_COLOR, BEAM_STROKE_WIDTH)),
-        )
-        glow = always_redraw(lambda: detector_glow(now))
+        # --- the light ---
+        glow, lights = make_light(now, lit_in, lit_arm)
         # light goes under the optics, and the glow under the detector
         self.add(glow, lights)
-        self.bring_to_front(splitter, x_mirror, y_mirror, detector, laser)
+        self.bring_to_front(*optics)
 
         run(self, now, T_INPUT, lit_in.animate.set_value(1))
         run(self, now, T_ARMS, lit_arm.animate.set_value(1), FadeIn(arm_tags))
 
         # --- equal arms: the returning beams cancel ---
         return_axes, return_waves, sum_axes, sum_wave = returning_waves(now)
+        detector_tag = optics[3][2]
         dark_note = Tex(
             "equal arms: the beams cancel", font_size=FONT_LEGEND,
             color=lighten(GUIDE_COLOR),
-        ).next_to(detector[2], UP, buff=0.3).align_to(detector[2], LEFT)
+        ).next_to(detector_tag, UP, buff=0.3).align_to(detector_tag, LEFT)
         run(
             self, now, T_READOUT,
             FadeIn(return_axes), FadeIn(return_waves),
@@ -440,26 +484,51 @@ class LIGOMichelson(Scene):
             FadeIn(ring_axes), FadeIn(ring_dots), FadeIn(trace_axes), FadeIn(trace),
         )
 
-        readout = MathTex(
-            r"\Delta\phi", r"= 2k\,(", "L_x", "-", "L_y", ")",
-            font_size=FONT_ANNOTATION,
-        )
-        readout[2].set_color(lighten(X_ARM_COLOR))
-        readout[4].set_color(lighten(Y_ARM_COLOR))
-        in_h = MathTex(
-            r"= \frac{4\pi L}{\lambda}\, h", font_size=FONT_ANNOTATION
-        )
-        in_h.next_to(readout, DOWN, buff=0.25).align_to(readout[1], LEFT)
-        equation = VGroup(readout, in_h).move_to([np.mean(PANEL_X), -2.4, 0])
-
+        readout, in_h, scale = make_equation()
         run(self, now, GW_ON + 1.5, FadeIn(readout))
         run(self, now, GW_ON + 3.5, FadeIn(in_h))
         run(self, now, GW_OFF)
-
-        scale = MathTex(
-            r"h \sim 10^{-21},\ L = 4\,\mathrm{km}"
-            r"\ \Rightarrow\ \Delta L \sim 10^{-18}\,\mathrm{m}",
-            font_size=FONT_LEGEND - 6, color=lighten(GUIDE_COLOR),
-        ).next_to(equation, DOWN, buff=0.35)
         run(self, now, GW_OFF + 1.0, FadeIn(scale))
         run(self, now, T_END)
+
+
+# --- LIGO beside the merger -------------------------------------------------
+# MergerOnSensitivityPlot plays this, as a video, beside the first run of the
+# merger (see data_scripts/render_ligo_michelson.py). The wave is the
+# merger's own chirp, so the test masses swing and the detector brightens in
+# step with the sheet; everything is set up from the first frame, so none of
+# the merger is spent building the interferometer, and the ring of free
+# masses is left out. Lab time here is the merger's clock plus
+# LIGO_VIDEO_LEAD: the video runs that far ahead, with no wave yet, while the
+# holes settle into the sheet.
+MERGER_PEAK = np.max(np.abs(observed_strain(np.linspace(0.0, MERGER_END, 20001))))
+
+
+def merger_strain(t):
+    """The merger's h at lab time t, normalised to a peak of 1."""
+    return observed_strain(t - LIGO_VIDEO_LEAD) / MERGER_PEAK
+
+
+# the whole run to the settled sheet, and a little over
+MERGER_SPAN = (LIGO_VIDEO_LEAD - 0.3, LIGO_VIDEO_LEAD + MERGER_END + 0.3)
+MERGER_VIDEO_END = LIGO_VIDEO_LEAD + MERGER_END + 3.0
+
+
+class LIGODuringMerger(Scene):
+    """The interferometer, lit and read out from the first frame, as the
+    merger's chirp passes."""
+
+    def construct(self):
+        now = ValueTracker(0.0)
+        h = merger_strain
+        apparatus, optics, arm_tags = make_apparatus(now, h)
+        glow, lights = make_light(now, ValueTracker(1.0), ValueTracker(1.0), h)
+        return_axes, return_waves, sum_axes, sum_wave = returning_waves(now, h)
+        trace_axes, trace = make_strain_trace(now, h, MERGER_SPAN)
+        readout, in_h, scale = make_equation()
+        self.add(
+            apparatus, glow, lights, *optics, arm_tags,
+            return_axes, return_waves, sum_axes, sum_wave,
+            trace_axes, trace, readout, in_h, scale,
+        )
+        run(self, now, MERGER_VIDEO_END)
