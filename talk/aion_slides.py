@@ -47,7 +47,11 @@ from aionanim.scenes.dai_data import LaserNoiseLissajous
 from aionanim.scenes.dipole import DipoleTrapLoading, SignalInjection
 from aionanim.scenes.gradiometer import GradiometerContinuous
 from aionanim.scenes.gradiometer_gw import GradiometerGWStretchContinuous
-from aionanim.scenes.gravitational_waves import MergerOnSensitivityPlot
+from aionanim.scenes.gravitational_waves import (
+    BlackHoleMerger,
+    MergerOnSensitivityPlot,
+)
+from aionanim.scenes.ligo import LIGOMichelson
 from aionanim.scenes.gw_landscape import SensitivityBuildUp
 from aionanim.scenes.light_shift import LightShiftSignalContinuous
 from aionanim.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
@@ -359,9 +363,21 @@ GW150914_KEY = (
 GW150914_FORMAT = replace(CITE_LABELLED_FORMAT, collaboration="LIGO Collaboration")
 
 
+class BlackHoleMergerSlide(DeckSlide, BlackHoleMerger):
+    """No stops: the merger plays straight through from the moment the slide
+    comes up, and holds on the settled sheet as the slide's own end."""
+
+
+class LIGOMichelsonSlide(Clicks, LIGOMichelson):
+    """The Michelson on its dark port, a stop, then a wave passes and lights
+    it up."""
+
+    CITE = (LIGO_PAPER,)
+
+
 class MergerOnSensitivityPlotSlide(Clicks, MergerOnSensitivityPlot):
-    """The merger runs first beside the LIGO Michelson video, then again beside
-    the sensitivity plot: a stop with each laid out and each settled.
+    """The merger beside the sensitivity plot: a stop once laid out and once
+    settled.
 
     The left panel becomes real LIGO data at the end, so its citation joins
     the detector paper under the same "LIGO" label."""
