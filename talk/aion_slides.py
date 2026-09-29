@@ -351,8 +351,11 @@ GW150914_FORMAT = replace(CITE_LABELLED_FORMAT, collaboration="LIGO Collaboratio
 
 
 class MergerOnSensitivityPlotSlide(Clicks, MergerOnSensitivityPlot):
-    """The left panel becomes real LIGO data partway through, so its citation
-    joins the detector paper under the same "LIGO" label."""
+    """The merger runs first beside the LIGO Michelson video, then again beside
+    the sensitivity plot: a stop with each laid out and each settled.
+
+    The left panel becomes real LIGO data at the end, so its citation joins
+    the detector paper under the same "LIGO" label."""
 
     CITE = (LIGO_PAPER, *MERGER_PAPERS)
     CITE_CORNER = DR  # under the plot, clear of the LIGO figure's time axis
