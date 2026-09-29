@@ -78,7 +78,7 @@ CITE_LABELLED_FORMAT = replace(AUTHOR_YEAR, highlight=("Walker, T",))
 
 TITLE = (r"A prototype differential atom interferometer", r"for fundamental physics")
 AUTHOR = r"Thomas Walker"
-VENUE = r"University of Freiburg, 2026"
+VENUE = r"@ Albert-Ludwigs Universit\"at Freiburg, 2026"
 SECTIONS = (
     r"Atom interferometry",
     r"Motivation",
@@ -552,7 +552,7 @@ class ExperimentSequenceSlide(DeckSlide, ExperimentSequenceSimple):
 
 
 class CoolingSequenceSlide(LoopingStages, CoolingSequence):
-    CITE = "pasatembouProgressUltracoldSr2024"
+    CITE = ("pasatembouProgressUltracoldSr2024",)
 
 
 class DipoleTrapLoadingSlide(LoopingStages, DipoleTrapLoading):
