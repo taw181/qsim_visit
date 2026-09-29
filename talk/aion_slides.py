@@ -670,11 +670,15 @@ class Aion10BeecroftSlide(DeckSlide):
 # The PX46 shaft in aice.png (1199 x 672 px): from under the surface building
 # down to its rounded foot, with the arrow just clear of its right-hand side.
 AICE_SHAFT_PX = ((940, 207), (940, 525))
+# The bottom edge of the figure's title box, which the points box goes under.
+AICE_TITLE_BOTTOM_PX = 197
+# Small enough that the box clears the yellow PX46 shaft and its label below.
+AICE_POINTS_FONT = 26
 
 
 class AICECernSlide(DeckSlide):
     """The AICE figure, which carries its own title, with the shaft's depth
-    marked on it."""
+    marked on it and what it is for in a box under the title."""
 
     CITE = ("arduiniTechnicalProposalAtom2026",)
 
@@ -704,7 +708,32 @@ class AICECernSlide(DeckSlide):
         label.next_to(depth, RIGHT, buff=0.15)
         depth.set_stroke(**PHOTO_LABEL_OUTLINE, background=True, family=False)
         label.set_stroke(**PHOTO_LABEL_OUTLINE, background=True)
-        self.play(FadeIn(figure), FadeIn(depth), FadeIn(label), run_time=0.8)
+
+        # what it is for, in a box like the figure's own title box, under it
+        points = VGroup(*(
+            Tex(rf"\textsf{{\textbf{{{line}}}}}", font_size=AICE_POINTS_FONT,
+                color=WHITE)
+            for line in (
+                r"\textbullet\ Sr \& Yb atoms",
+                r"\textbullet\ ULDM",
+                r"\textbullet\ $\boldsymbol{\alpha}$ measurement",
+                r"\textbullet\ Test of equivalence principle",
+            )
+        )).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+        underway = Tex(r"\textsf{\textbf{Construction underway!}}",
+                       font_size=AICE_POINTS_FONT, color=PHOTO_LABEL_COLOR)
+        underway.next_to(points, DOWN, buff=0.22, aligned_edge=LEFT)
+        text = VGroup(points, underway)
+        box = SurroundingRectangle(
+            text, buff=0.25, stroke_color=BLACK, stroke_width=1.5,
+            fill_color=BLACK, fill_opacity=0.55,
+        )
+        panel = VGroup(box, text)
+        panel.next_to(at(0, AICE_TITLE_BOTTOM_PX), DR, buff=0).shift(
+            RIGHT * 0.25 + DOWN * 0.12
+        )
+        self.play(FadeIn(figure), FadeIn(depth), FadeIn(label), FadeIn(panel),
+                  run_time=0.8)
 
 
 class AEDGESlide(Clicks, AEDGESensitivity):
