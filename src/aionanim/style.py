@@ -565,3 +565,26 @@ CITATION_OUTLINE = dict(color=PLOT_BACKGROUND, width=7, opacity=0.9)
 PLACEHOLDER_STYLE = dict(
     dash_length=0.15, stroke_width=2, stroke_opacity=0.6, color=GUIDE_COLOR
 )
+
+
+# --- a high-flux atom source (HiFAIS) -------------------------------------
+# The source's CAD renders, labelled on the page rather than in the image so
+# the labels read on the dark background: plot-foreground text, with a thin
+# leader in the lightened construction grey ending on a dot at the part.
+CHAMBER_LABEL_COLOR = PLOT_FOREGROUND
+CHAMBER_LEADER_STYLE = dict(stroke_width=2, color=lighten(GUIDE_COLOR))
+CHAMBER_LEADER_DOT_RADIUS = 0.045
+FONT_CHAMBER_LABEL = FONT_AXIS
+FONT_CHAMBER_CAPTION = FONT_TICK
+# The MOT loading curves (Fig. 5 inset), one per oven temperature, coolest to
+# hottest on the cool-to-hot ramp the merger tracks' time dots already use --
+# its last four stops, which all sample clear of the dark background.
+OVEN_TEMPERATURE_COLORS = [ManimColor(c) for c in GW_MERGER_TIME_COLORS[1:]]
+LOADING_DOT_RADIUS = 0.04
+LOADING_ERROR_WIDTH = 2
+LOADING_FIT_WIDTH = 2.5
+# A fit carried on past the points it was fitted to is dashed: it is the
+# model's prediction there, which the data are held against, not a fit.
+LOADING_EXTRAPOLATION_DASH = 0.09
+# The atom number the fits stop at: a reference, not data, like a band edge.
+LOADING_CUTOFF_STYLE = GW_BAND_EDGE_STYLE

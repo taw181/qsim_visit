@@ -47,7 +47,8 @@ NAMES = {
 
 def deck():
     lines = (Path(__file__).parent / "deck.txt").read_text(encoding="utf-8").splitlines()
-    return [s for line in lines if (s := line.split("#")[0].strip())]
+    # an `extra_slides/x.py: XSlide` line names a slide from another file
+    return [s.rpartition(":")[2].strip() for line in lines if (s := line.split("#")[0].strip())]
 
 
 def pretty(name):

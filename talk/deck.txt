@@ -1,5 +1,8 @@
 # The deck's order: one slide class from aion_slides.py per line.
 # Read by deck.sh and deck.py; blank lines and #-comments are ignored.
+# A slide from another file is named with it, relative to talk/, as
+# `extra_slides/some_slides.py: SomeSlide`: it is played and rendered in its
+# place, but numbered as none of the deck (no footer number, not counted).
 
 # intro
 TitleSlide
@@ -39,3 +42,5 @@ AICECernSlide
 AEDGESlide
 # outro
 OutroSlide
+# extra slides, after the end: for questions
+extra_slides/hifais_slides.py: HighFluxLoadingSlide

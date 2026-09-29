@@ -24,9 +24,21 @@ QUALITIES = {"l", "m", "h", "p", "k"}
 ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
 
 
-def deck():
+def deck_files():
+    """{slide: the file it renders from}, in deck order. A line
+    `extra_slides/x.py: XSlide` names a slide from another file under talk/."""
     lines = (ROOT / "talk" / "deck.txt").read_text(encoding="utf-8").splitlines()
-    return [slide for line in lines if (slide := line.split("#")[0].strip())]
+    files = {}
+    for line in lines:
+        if not (entry := line.split("#")[0].strip()):
+            continue
+        path, _, slide = entry.rpartition(":")
+        files[slide.strip()] = f"talk/{path.strip()}" if path else SLIDES
+    return files
+
+
+def deck():
+    return list(deck_files())
 
 
 def manim_slides(*args, sync=True, **kwargs):
@@ -40,10 +52,20 @@ def render(jobs, fps, args):
     # it halves the frames at h. l keeps its own 15.
     fps = fps or (15 if quality == "l" else 30)
     slides = args or deck()
+    files = deck_files()
+
+    def file_of(slide):
+        return files.get(slide, SLIDES)
+
     # -q h, not -qh: manim-slides reads the h of -qh as --help.
     quality_args = ["-q", quality, "--fps", str(fps)]
     if jobs == 1:
-        return manim_slides("render", *quality_args, SLIDES, *slides)
+        # one manim-slides run per file, in the order the files first come up
+        rc = 0
+        for path in dict.fromkeys(map(file_of, slides)):
+            named = [s for s in slides if file_of(s) == path]
+            rc = manim_slides("render", *quality_args, path, *named) or rc
+        return rc
 
     # Cairo renders on one core, so run one process per slide, each
     # logging to media/deck_logs/<Slide>.log rather than interleaving.
@@ -54,7 +76,7 @@ def render(jobs, fps, args):
     def render_one(slide):
         log = logs / f"{slide}.log"
         with open(log, "wb") as out:
-            rc = manim_slides("render", *quality_args, SLIDES, slide, sync=False,
+            rc = manim_slides("render", *quality_args, file_of(slide), slide, sync=False,
                               stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
         print(f"done    {slide}" if rc == 0 else
               f"FAILED  {slide}  (see {log.relative_to(ROOT).as_posix()})", flush=True)

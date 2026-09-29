@@ -94,11 +94,14 @@ SLIDE_SETTLE = 0.1
 
 # --- how a scene's hooks become slide breaks -------------------------------
 def deck_order():
-    """The slide classes in talk/deck.txt, in order, as deck.sh reads them."""
+    """The numbered slides in talk/deck.txt, in order: this file's. A line
+    naming a slide with its file (``extra_slides/x.py: XSlide``) is played
+    with the deck but is none of its numbered slides."""
     lines = (
         (Path(__file__).parent / "deck.txt").read_text(encoding="utf-8").splitlines()
     )
-    return [slide for line in lines if (slide := line.split("#")[0].strip())]
+    slides = [slide for line in lines if (slide := line.split("#")[0].strip())]
+    return [slide for slide in slides if ":" not in slide]
 
 
 DECK = deck_order()
