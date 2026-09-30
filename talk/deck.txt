@@ -46,3 +46,4 @@ AEDGESlide
 OutroSlide
 # extra slides, after the end: for questions
 extra_slides/hifais_slides.py: HighFluxLoadingSlide
+extra_slides/phase_shear_slides.py: PhaseShearReadoutSlide
