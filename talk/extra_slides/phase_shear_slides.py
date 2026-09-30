@@ -25,7 +25,6 @@ from aionanim.scenes.phase_shear import PhaseShearReadout  # noqa: E402
 
 class PhaseShearReadoutSlide(Clicks, PhaseShearReadout):
     """A click once the square-on pulse and its atoms are up, once the ports
-    are imaged, once the pulse has tilted and once the fringe period is
-    marked; then the fit's phase."""
+    are imaged; then the pulse tilts and the fringe period is marked."""
 
     CITE = ("sugarbakerEnhancedAtomInterferometer2013",)
