@@ -20,6 +20,7 @@ The project is two layers, because the general part gets spun out as its own pac
 Working rules:
 
 - `uv run manim -ql src/aionanim/scenes/<file>.py <Scene>` — run from the project root so `manim.cfg` applies; `-qh` for the talk. Deck: `talk/deck.sh render [-j N] [-f FPS] [l|h] [Slide ...]` (`-j N`: N slides in parallel, one core each; logs in `media/deck_logs/`; `-f`: frame rate, default 30, `l` keeps 15; slides skip manim-slides' reversed copies), `talk/deck.sh present`, `talk/deck.sh html`; on Windows `uv run talk/deck.py` with the same arguments (both pass `-q h`, not `-qh`: manim-slides reads the `h` as `--help`).
+- After any change to a slide, always render the changed slides in low quality (`talk/deck.sh render l <Slide> ...`), check the frames, and end by giving the user both commands for those slides: to present them, `uv run manim-slides present <Slide> ...`, and to render them in high quality, `talk/deck.sh render h <Slide> ...`.
 - Output: `media/videos/<script-stem>/<quality>/<Scene>.mp4` (gitignored).
 - Imports are absolute (`from aionanim.tools.clock import make_dial`), never relative: manim loads a scene file by path under a module name built from that path, so relative imports break. Star-import only `manim` and `aionanim.style`; import names from topic modules explicitly, since they share names (`strain`, `GW_PERIOD`, ...).
 - `scenes/__init__.py` and `aionanim/__init__.py` must import nothing, or a scene file rendered by path gets loaded twice.
