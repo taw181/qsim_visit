@@ -49,3 +49,4 @@ OutroSlide
 # extra slides, after the end: for questions
 extra_slides/hifais_slides.py: HighFluxLoadingSlide
 extra_slides/phase_shear_slides.py: PhaseShearReadoutSlide
+extra_slides/squeezing_slides.py: SpinSqueezingSlide
