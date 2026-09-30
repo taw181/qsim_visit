@@ -53,6 +53,7 @@ from aionanim.scenes.gravitational_waves import (
 )
 from aionanim.scenes.ligo import LIGOMichelson
 from aionanim.scenes.gw_landscape import SensitivityBuildUp
+from aionanim.scenes.km_challenges import KmScaleChallenges
 from aionanim.scenes.light_shift import LightShiftSignalContinuous
 from aionanim.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
 from aionanim.scenes.single_photon import SinglePhotonMachZehnder
@@ -649,6 +650,13 @@ class ExtractedSignalSlide(DeckSlide):
 # --- future plans ---------------------------------------------------------
 class FuturePlansSlide(SectionSlide):
     SECTION = r"Future plans"
+
+
+class KmChallengesSlide(Clicks, KmScaleChallenges):
+    """The headings, then one challenge per click: the prototype's figures
+    beside AION-km's (its Table 1) and what they ask for."""
+
+    CITE = (DAI_PAPER, "badurinaAIONAtomInterferometer2020")
 
 
 # The baseline figure (baseline.png, 295 x 707 px): its own "L", covered and
