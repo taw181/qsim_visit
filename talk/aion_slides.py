@@ -57,7 +57,11 @@ from aionanim.scenes.light_shift import LightShiftSignalContinuous
 from aionanim.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
 from aionanim.scenes.single_photon import SinglePhotonMachZehnder
 from aionanim.scenes.slicing import VelocitySlicing
-from aionanim.scenes.uldm import DarkMatterField, DarkMatterPhaseContinuous
+from aionanim.scenes.uldm import (
+    DarkMatterField,
+    DarkMatterGradiometer,
+    DarkMatterPhaseContinuous,
+)
 from aionanim.scenes.uldm_scale import DarkMatterScale
 from aionanim.tools.citations import citation, labelled_citation, place_citation
 from aionanim.tools.layout import image_point, load_image, numbered_list, slide_title
@@ -439,6 +443,12 @@ class DarkMatterFieldSlide(RunsOnIntoLoops, DarkMatterField):
 class DarkMatterPhaseSlide(Clicks, DarkMatterPhaseContinuous):
     """Continuous: the field keeps oscillating while the pulses fire, so one
     click runs the interferometer from the first pulse to the ports."""
+
+
+class DarkMatterGradiometerSlide(Clicks, DarkMatterGradiometer):
+    """The same field through the gradiometer, continuous like the rest: one
+    click runs both interferometers from the first pulse to the ports, the far
+    cloud L/c behind the near one."""
 
 
 # --- our prototype device -------------------------------------------------

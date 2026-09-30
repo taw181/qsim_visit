@@ -41,6 +41,7 @@ NAMES = {
     "LMTMachZehnderSlide": "LMT Mach-Zehnder",
     "LMTResultsSlide": "LMT results",
     "GradiometerGWStretchSlide": "Gradiometer: a stretching baseline",
+    "DarkMatterGradiometerSlide": "Dark matter, measured differentially",
     "OutroSlide": "Thank you",
 }
 

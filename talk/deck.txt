@@ -23,6 +23,7 @@ GradiometerGWStretchSlide
 DarkMatterFieldSlide
 DarkMatterScaleSlide
 DarkMatterPhaseSlide
+DarkMatterGradiometerSlide
 # our prototype device
 PrototypeDeviceSlide
 AIONCollabSlide
