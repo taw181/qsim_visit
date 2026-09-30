@@ -27,4 +27,8 @@ class SpinSqueezingSlide(Clicks, SpinSqueezing):
     """A click once the coherent state is up, once the cavity has read out
     N_g, once the disc is squeezed; then it turns onto the phase."""
 
-    CITE = ("hostenMeasurementNoise1002016", "greveEntanglementenhancedMatterwaveInterferometry2022")
+    CITE = (
+        "chenConditionalSpinSqueezing2011",
+        "hostenMeasurementNoise1002016",
+        "greveEntanglementenhancedMatterwaveInterferometry2022",
+    )
