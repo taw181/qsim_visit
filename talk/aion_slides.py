@@ -460,7 +460,7 @@ class PrototypeDeviceSlide(SectionSlide):
     SECTION = r"Our prototype device"
 
 
-# plot_scripts/aion_km_baseline.py draws the sketch on a 3840 px-wide frame:
+# plot_scripts/aion_baselines.py draws the sketches on a 3840 px-wide frame:
 # placed at that scale, its line weights match the rest of the deck
 BASELINE_PX_PER_UNIT = 3840 / config.frame_width
 
@@ -676,12 +676,6 @@ class KmChallengesSlide(Clicks, KmScaleChallenges):
     CITE = (DAI_PAPER, "badurinaAIONAtomInterferometer2020")
 
 
-# The baseline figure (baseline.png, 295 x 707 px): its own "L", covered and
-# relabelled with AION-10's length, and the arrow the label goes beside.
-BASELINE_L_PX = ((258, 326), (294, 379))  # upper left, lower right of the "L"
-BASELINE_ARROW_PX = (244, 383)  # the arrow's midpoint
-
-
 class Aion10BeecroftSlide(DeckSlide):
     """The 10 m baseline, the building cut away round it, then the stairwell
     it runs down, one per click left to right -- laid out as the row they end
@@ -694,7 +688,9 @@ class Aion10BeecroftSlide(DeckSlide):
 
     def construct(self):
         title = slide_title(r"AION-10 at Oxford")
-        baseline = load_image(MEDIA / "baseline.png", height=5.2)
+        # AION-km's sketch with two sources along 10 m, at the deck's line weights
+        baseline = load_image(FIGURES / "aion_10_baseline.png")
+        baseline.height = baseline.pixel_array.shape[0] / BASELINE_PX_PER_UNIT
         stairwell = load_image(MEDIA / "stairwell.jpg", height=4.9)
         building = load_image(MEDIA / "beecroft.jpeg", height=config.frame_height - 0.4)
         Group(baseline, building, stairwell).arrange(RIGHT, buff=0.7).set_x(0.2)
@@ -702,22 +698,8 @@ class Aion10BeecroftSlide(DeckSlide):
         stairwell.set_y(-0.45)
         building.set_y(0)
 
-        # white over the figure's own "L", and the length in its place
-        ul, dr = [image_point(baseline, *p) for p in BASELINE_L_PX]
-        cover = Rectangle(
-            width=dr[0] - ul[0],
-            height=ul[1] - dr[1],
-            stroke_width=0,
-            fill_color=WHITE,
-            fill_opacity=1,
-        ).move_to((ul + dr) / 2)
-        # in the figure's own hand: black sans, along the arrow, where the L was
-        length = Tex(r"\textsf{10\,m}", font_size=FONT_ANNOTATION, color=BLACK)
-        length.rotate(PI / 2).move_to(cover)
-        labelled = Group(baseline, cover, length)
-
         # left to right, one per click
-        self.play(FadeIn(title), FadeIn(labelled), run_time=0.8)
+        self.play(FadeIn(title), FadeIn(baseline), run_time=0.8)
         self.next_slide()
         self.play(FadeIn(building, shift=LEFT * 0.3), run_time=0.8)
         self.next_slide()
