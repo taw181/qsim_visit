@@ -457,15 +457,29 @@ class PrototypeDeviceSlide(SectionSlide):
     SECTION = r"Our prototype device"
 
 
+# plot_scripts/aion_km_baseline.py draws the sketch on a 3840 px-wide frame:
+# placed at that scale, its line weights match the rest of the deck
+BASELINE_PX_PER_UNIT = 3840 / config.frame_width
+
+
 class AIONCollabSlide(DeckSlide):
-    """Who AION are and where."""
+    """Who AION are and where, and the kilometre baseline they are building
+    towards: four interferometers along one shaft."""
 
     def construct(self):
         title = slide_title(r"The AION collaboration")
         logo = load_image(MEDIA / "aion_logo_on_dark.png", height=1.0)
         logo.to_corner(UR, buff=0.4)
-        uk_map = load_image(MEDIA / "aion_map.jpeg", height=6.0).move_to(DOWN * 0.45)
-        self.play(FadeIn(title), FadeIn(logo), FadeIn(uk_map), run_time=0.8)
+        uk_map = load_image(MEDIA / "aion_map.jpeg", height=6.0).move_to(
+            LEFT * 2.0 + DOWN * 0.45
+        )
+        baseline = load_image(FIGURES / "aion_km_baseline.png")
+        baseline.height = baseline.pixel_array.shape[0] / BASELINE_PX_PER_UNIT
+        baseline.move_to(RIGHT * 3.6 + DOWN * 0.45)
+        self.play(
+            FadeIn(title), FadeIn(logo), FadeIn(uk_map), FadeIn(baseline),
+            run_time=0.8,
+        )
 
 
 # The dark window between the coils in chamber_cropped.png (2475 x 1548 px),
