@@ -13,9 +13,8 @@ wrappers below turn the hook into a slide break:
 - stage_break() is the sequence scenes' timed hold; LoopingStages loops two
   seconds of it instead, so the cloud keeps moving while a stage is talked
   through.
-- hold() is DarkMatterField's one period of the field, as beat() is
-  DarkMatterScalePlot's; the slide loops it. (DarkMatterScale's hold() too,
-  on its slide in extra_slides/uldm_scale_slides.py.)
+- hold() is DarkMatterField's one period of the field; the slide loops it.
+  (DarkMatterScale's too, on its slide in extra_slides/uldm_scale_slides.py.)
 
 A looping stop is still one click: RunsOnIntoLoops plays each stretch straight
 on into its loop, and the click moves on from the loop.
@@ -427,16 +426,12 @@ class GradiometerGWStretchSlide(Clicks, GradiometerGWStretchContinuous):
     whole sequence; the stops are the set-up before it and the readout after."""
 
 
-class DarkMatterScaleSlide(RunsOnIntoLoops, DarkMatterScalePlot):
+class DarkMatterScaleSlide(Clicks, DarkMatterScalePlot):
     """The plot up, then a click per mass, each labelled with how long its
-    wave is, and one for the verdict, the wave across the top looping at each.
-    The fly-out across the solar system it replaces is
-    DarkMatterScaleFlyoutSlide, in extra_slides/."""
+    wave is, and one for the verdict. The fly-out across the solar system it
+    replaces is DarkMatterScaleFlyoutSlide, in extra_slides/."""
 
     CITE = ("badurinaAIONAtomInterferometer2020",)  # the curves
-
-    def beat(self):
-        self.loop(super().beat)
 
 
 class DarkMatterFieldSlide(RunsOnIntoLoops, DarkMatterField):
