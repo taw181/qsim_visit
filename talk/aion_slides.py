@@ -13,8 +13,8 @@ wrappers below turn the hook into a slide break:
 - stage_break() is the sequence scenes' timed hold; LoopingStages loops two
   seconds of it instead, so the cloud keeps moving while a stage is talked
   through.
-- hold() is DarkMatterScale's and DarkMatterField's one period of the field;
-  the slide loops it.
+- hold() is DarkMatterField's one period of the field; the slide loops it.
+  (DarkMatterScale's too, on its slide in extra_slides/uldm_scale_slides.py.)
 
 A looping stop is still one click: RunsOnIntoLoops plays each stretch straight
 on into its loop, and the click moves on from the loop.
@@ -63,7 +63,7 @@ from aionanim.scenes.uldm import (
     DarkMatterGradiometer,
     DarkMatterPhaseContinuous,
 )
-from aionanim.scenes.uldm_scale import DarkMatterScale
+from aionanim.scenes.uldm_scale import DarkMatterScalePlot
 from aionanim.tools.citations import citation, labelled_citation, place_citation
 from aionanim.tools.layout import image_point, load_image, numbered_list, slide_title
 from aionanim.tools.primitives import make_cloud
@@ -426,14 +426,12 @@ class GradiometerGWStretchSlide(Clicks, GradiometerGWStretchContinuous):
     whole sequence; the stops are the set-up before it and the readout after."""
 
 
-class DarkMatterScaleSlide(RunsOnIntoLoops, DarkMatterScale):
-    CITE = ("badurinaAIONAtomInterferometer2020",)  # the inset's curves
-    # short, to end before the Earth's limb in the first view and clear the
-    # verdict in the last
-    CITE_FORMAT = AUTHOR_YEAR
+class DarkMatterScaleSlide(Clicks, DarkMatterScalePlot):
+    """The plot up, then a click per mass, each labelled with how long its
+    wave is, and one for the verdict. The fly-out across the solar system it
+    replaces is DarkMatterScaleFlyoutSlide, in extra_slides/."""
 
-    def hold(self):
-        self.loop(super().hold)
+    CITE = ("badurinaAIONAtomInterferometer2020",)  # the curves
 
 
 class DarkMatterFieldSlide(RunsOnIntoLoops, DarkMatterField):
