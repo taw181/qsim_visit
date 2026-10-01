@@ -40,9 +40,9 @@ AllanDeviationSlide
 ExtractedSignalSlide
 # future plans
 FuturePlansSlide
-KmChallengesSlide
 Aion10BeecroftSlide
 AICECernSlide
+KmChallengesSlide
 AEDGESlide
 # outro
 OutroSlide
