@@ -43,10 +43,10 @@ from manim_atoms.bibliography import (
 from manim_atoms.aion.style import *
 from manim_atoms.aion.scenes.aedge import AEDGESensitivity
 from manim_atoms.interferometry.scenes.clock import ClockPhaseTerms
+from manim_atoms.interferometry.scenes.gradiometer import GradiometerContinuous
 from manim_atoms.trapping.scenes.cooling import CoolingSequence
 from manim_atoms.aion.scenes.dai_data import LaserNoiseLissajous
-from manim_atoms.trapping.scenes.dipole import DipoleTrapLoading, SignalInjection
-from manim_atoms.aion.scenes.gradiometer import GradiometerContinuous
+from manim_atoms.trapping.scenes.dipole import DipoleTrapLoading
 from manim_atoms.aion.scenes.gradiometer_gw import GradiometerGWStretchContinuous
 from manim_atoms.aion.scenes.gravitational_waves import (
     BlackHoleMerger,
@@ -56,6 +56,7 @@ from manim_atoms.aion.scenes.ligo import LIGOMichelson
 from manim_atoms.aion.scenes.gw_landscape import SensitivityBuildUp
 from manim_atoms.aion.scenes.km_challenges import KmScaleChallenges
 from manim_atoms.aion.scenes.light_shift import LightShiftSignalContinuous
+from manim_atoms.aion.scenes.signal_injection import SignalInjection
 from manim_atoms.trapping.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
 from manim_atoms.interferometry.scenes.single_photon import SinglePhotonMachZehnder
 from manim_atoms.trapping.scenes.slicing import VelocitySlicing
