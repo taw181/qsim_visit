@@ -20,8 +20,8 @@ from manim import *
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from aion_slides import RunsOnIntoLoops  # noqa: E402
-from aionanim.bibliography import AUTHOR_YEAR  # noqa: E402
-from aionanim.scenes.uldm_scale import DarkMatterScale  # noqa: E402
+from manim_atoms.bibliography import AUTHOR_YEAR  # noqa: E402
+from manim_atoms.aion.scenes.uldm_scale import DarkMatterScale  # noqa: E402
 
 
 class DarkMatterScaleFlyoutSlide(RunsOnIntoLoops, DarkMatterScale):

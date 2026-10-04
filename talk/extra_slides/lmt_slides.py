@@ -19,8 +19,8 @@ from manim import *
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from aion_slides import MEDIA, Clicks, DeckSlide  # noqa: E402
-from aionanim.scenes.lmt import LargeMomentumTransfer, LMTMachZehnder  # noqa: E402
-from aionanim.tools.layout import load_image, slide_title  # noqa: E402
+from manim_atoms.interferometry.scenes.lmt import LargeMomentumTransfer, LMTMachZehnder  # noqa: E402
+from manim_atoms.core.layout import load_image, slide_title  # noqa: E402
 
 
 class LargeMomentumTransferSlide(DeckSlide, LargeMomentumTransfer):

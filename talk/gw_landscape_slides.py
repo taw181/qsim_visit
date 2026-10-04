@@ -1,4 +1,4 @@
-"""SensitivityBuildUpSlide is aionanim's SensitivityBuildUp as a manim-slides
+"""SensitivityBuildUpSlide is manim_atoms's SensitivityBuildUp as a manim-slides
 slide: one slide per step, advancing on the presenter's click instead of a
 timed hold.
 
@@ -15,7 +15,7 @@ or build a standalone HTML deck to open in any browser:
 
 from manim_slides import Slide
 
-from aionanim.scenes.gw_landscape import SensitivityBuildUp
+from manim_atoms.aion.scenes.gw_landscape import SensitivityBuildUp
 
 
 class SensitivityBuildUpSlide(Slide, SensitivityBuildUp):

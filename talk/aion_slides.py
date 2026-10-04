@@ -1,12 +1,13 @@
 """The Freiburg talk as one manim-slides deck, in the order of the talk.
 
 Intro, atom interferometry, gravitational waves, dark matter, the prototype,
-future plans, outro. The animated slides are aionanim scenes, picked up unmodified
+future plans, outro. The animated slides are manim_atoms scenes, picked up unmodified
 through multiple inheritance; the static ones (title, contents, photographs,
 figures) are laid out here, with the pictures in talk/media/.
 
 A scene marks where the presenter should stop by calling a hook, and the
-wrappers below turn the hook into a slide break:
+wrappers -- manim_atoms.slides.deck's, configured for this deck below -- turn
+the hook into a slide break:
 
 - beat() is a no-op in the package; Clicks makes it a plain stop. Nothing in
   those scenes moves while they are paused, so there is nothing to loop.
@@ -19,7 +20,8 @@ wrappers below turn the hook into a slide break:
 A looping stop is still one click: RunsOnIntoLoops plays each stretch straight
 on into its loop, and the click moves on from the loop.
 
-The deck order lives in talk/deck.sh, which renders, presents and converts:
+The deck order lives in talk/deck.txt; talk/deck.sh renders, presents and
+converts it (through manim_atoms' manim-atoms-deck):
 
     talk/deck.sh render h     # -q h; `l` for a quick look
     talk/deck.sh present
@@ -30,44 +32,44 @@ from dataclasses import replace
 from pathlib import Path
 
 from manim import *
-from manim_slides import Slide
 
-from aionanim.bibliography import (
+from manim_atoms.bibliography import (
     AUTHOR_YEAR,
     FULL,
     SHORT,
     format_reference,
     load_bibliography,
 )
-from aionanim.style import *
-from aionanim.scenes.aedge import AEDGESensitivity
-from aionanim.scenes.clock import ClockPhaseTerms
-from aionanim.scenes.cooling import CoolingSequence
-from aionanim.scenes.dai_data import LaserNoiseLissajous
-from aionanim.scenes.dipole import DipoleTrapLoading, SignalInjection
-from aionanim.scenes.gradiometer import GradiometerContinuous
-from aionanim.scenes.gradiometer_gw import GradiometerGWStretchContinuous
-from aionanim.scenes.gravitational_waves import (
+from manim_atoms.aion.style import *
+from manim_atoms.aion.scenes.aedge import AEDGESensitivity
+from manim_atoms.interferometry.scenes.clock import ClockPhaseTerms
+from manim_atoms.trapping.scenes.cooling import CoolingSequence
+from manim_atoms.aion.scenes.dai_data import LaserNoiseLissajous
+from manim_atoms.trapping.scenes.dipole import DipoleTrapLoading, SignalInjection
+from manim_atoms.aion.scenes.gradiometer import GradiometerContinuous
+from manim_atoms.aion.scenes.gradiometer_gw import GradiometerGWStretchContinuous
+from manim_atoms.aion.scenes.gravitational_waves import (
     BlackHoleMerger,
     MergerOnSensitivityPlot,
 )
-from aionanim.scenes.ligo import LIGOMichelson
-from aionanim.scenes.gw_landscape import SensitivityBuildUp
-from aionanim.scenes.km_challenges import KmScaleChallenges
-from aionanim.scenes.light_shift import LightShiftSignalContinuous
-from aionanim.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
-from aionanim.scenes.single_photon import SinglePhotonMachZehnder
-from aionanim.scenes.slicing import VelocitySlicing
-from aionanim.scenes.uldm import (
+from manim_atoms.aion.scenes.ligo import LIGOMichelson
+from manim_atoms.aion.scenes.gw_landscape import SensitivityBuildUp
+from manim_atoms.aion.scenes.km_challenges import KmScaleChallenges
+from manim_atoms.aion.scenes.light_shift import LightShiftSignalContinuous
+from manim_atoms.trapping.scenes.sequence import SEQ_SIMPLE_REFERENCES, ExperimentSequenceSimple
+from manim_atoms.interferometry.scenes.single_photon import SinglePhotonMachZehnder
+from manim_atoms.trapping.scenes.slicing import VelocitySlicing
+from manim_atoms.aion.scenes.uldm import (
     DarkMatterField,
     DarkMatterGradiometer,
     DarkMatterPhaseContinuous,
 )
-from aionanim.scenes.uldm_scale import DarkMatterScalePlot
-from aionanim.tools.citations import citation, labelled_citation, place_citation
-from aionanim.tools.layout import image_point, load_image, numbered_list, slide_title
-from aionanim.tools.primitives import make_cloud
-from aionanim.tools.video import VideoFrame, load_video_frames
+from manim_atoms.aion.scenes.uldm_scale import DarkMatterScalePlot
+from manim_atoms.core.citations import labelled_citation
+from manim_atoms.core.layout import image_point, load_image, numbered_list, slide_title
+from manim_atoms.core.primitives import make_cloud
+from manim_atoms.core.video import VideoFrame, load_video_frames
+from manim_atoms.slides import deck
 
 MEDIA = Path(__file__).parent / "media"
 # The measured-data plots plot_scripts/ draw from the package data.
@@ -94,163 +96,42 @@ SECTIONS = (
 # it the veil over it takes back so the title reads.
 TITLE_VIDEO_FPS = 15
 TITLE_VEIL_OPACITY = 0.55
-# How long each slide holds its last frame before it stops. Manim only draws
-# an animation's final frame when the next one starts, so without this a slide
-# freezes a frame short -- atoms a hair before their vertex -- and jumps the
-# rest of the way on the click. Anything over one frame at 15 fps will do.
+# How long each slide holds its last frame before it stops (see
+# manim_atoms.slides.deck.DeckSlide.SETTLE).
 SLIDE_SETTLE = 0.1
-
-
-# --- how a scene's hooks become slide breaks -------------------------------
-def deck_order():
-    """The numbered slides in talk/deck.txt, in order: this file's. A line
-    naming a slide with its file (``extra_slides/x.py: XSlide``) is played
-    with the deck but is none of its numbered slides."""
-    lines = (
-        (Path(__file__).parent / "deck.txt").read_text(encoding="utf-8").splitlines()
-    )
-    slides = [slide for line in lines if (slide := line.split("#")[0].strip())]
-    return [slide for slide in slides if ":" not in slide]
-
-
-DECK = deck_order()
+# The deck's order: the footer numbers each slide by its place in it.
+DECK = deck.load_deck(Path(__file__).parent / "deck.txt")
 
 
 def cite(*keys):
     """The deck's references under these keys, failing on one not in AION.bib."""
-    missing = [k for k in keys if k not in BIB]
-    if missing:
-        raise KeyError(f"not in AION.bib: {', '.join(missing)}")
-    return [BIB[k] for k in keys]
+    return deck.cite(BIB, *keys)
 
 
-def make_footer(number, total):
-    """The progress bar along the bottom edge, filled to this slide's place in
-    the deck, and the slide's number in the corner above the end of it."""
-    width = config.frame_width
-    bottom = -config.frame_y_radius + PROGRESS_BAR_HEIGHT / 2
-    track = Rectangle(
-        width=width,
-        height=PROGRESS_BAR_HEIGHT,
-        stroke_width=0,
-        fill_color=PROGRESS_TRACK_COLOR,
-        fill_opacity=1,
-    ).move_to([0, bottom, 0])
-    fill = (
-        Rectangle(
-            width=width * number / total,
-            height=PROGRESS_BAR_HEIGHT,
-            stroke_width=0,
-            fill_color=PROGRESS_FILL_COLOR,
-            fill_opacity=1,
-        )
-        .align_to(track, LEFT)
-        .set_y(bottom)
-    )
-    label = Tex(str(number), font_size=FONT_SLIDE_NUMBER, color=SLIDE_NUMBER_COLOR)
-    label.next_to(track, UP, buff=0.1).to_edge(RIGHT, buff=0.15)
-    label.set_stroke(PLOT_BACKGROUND, width=4, background=True)  # legible over photos
-    return VGroup(track, fill, label)
+# --- how a scene's hooks become slide breaks -------------------------------
+# The machinery is manim_atoms.slides.deck's; this deck only says which deck
+# file it numbers its slides from, where its references are, and how they read.
+class DeckSlide(deck.DeckSlide):
+    """Every slide in the deck: manim_atoms' DeckSlide, numbered from
+    talk/deck.txt, citing AION.bib."""
 
-
-class DeckSlide(Slide):
-    """Every slide in the deck: a Slide that stops on its finished frame, with
-    the footer (progress bar and slide number) over everything it draws, and
-    the references it names in CITE (AION.bib keys) bottom left above it:
-    one line each, or, if CITE holds (label, key, ...) tuples, run on together
-    as "label: Author et al. (year)". CITE_CORNER moves it off something the
-    footer would cover.
-
-    Slides are rendered without reversed copies (skip_reversing), so stepping
-    back replays a slide forwards.
-
-    Looping slides are left without the settling hold: their last frame is
-    their first, so the one manim leaves out is the one a loop would repeat.
-
-    The footer and citation are foreground mobjects, so they stay on top of
-    whatever the scene adds; they are pinned to the frame in a 3D scene, ride
-    along with a moving camera, and are kept out of any remove(), since a
-    scene may clear the page with remove(*self.mobjects).
-    """
-
-    CITE = ()
+    DECK = DECK
+    BIB = BIB
     CITE_FORMAT = CITE_FORMAT
-    CITE_CORNER = DL
-    # no reversed copy of each slide: it costs a re-encode, and stepping back
-    # through the deck then replays a slide forwards instead
-    skip_reversing = True
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.wait_time_between_slides = SLIDE_SETTLE
-        self.wait_between_looping_slides = False
-        self.furniture = []
-
-    def setup(self):
-        super().setup()
-        if self.CITE:
-            self._pin(place_citation(self.citation(), self.CITE_CORNER))
-        name = type(self).__name__
-        if name in DECK:
-            self._pin(make_footer(DECK.index(name) + 1, len(DECK)))
-
-    def citation(self):
-        if all(isinstance(c, tuple) for c in self.CITE):
-            return labelled_citation(
-                [(label, cite(*keys)) for label, *keys in self.CITE],
-                fmt=CITE_LABELLED_FORMAT,
-            )
-        return citation(*cite(*self.CITE), fmt=self.CITE_FORMAT)
-
-    def _pin(self, mob):
-        """``mob`` on top, fixed on the screen, and out of reach of remove()."""
-        if isinstance(self, ThreeDScene):
-            self.add_fixed_in_frame_mobjects(mob)
-        elif isinstance(self, MovingCameraScene):
-            frame = self.camera.frame  # moves, but never zooms
-            offset = mob.get_center() - frame.get_center()
-            mob.add_updater(lambda m: m.move_to(frame.get_center() + offset))
-        self.add_foreground_mobject(mob)
-        self.furniture.append(mob)
-
-    def remove(self, *mobjects):
-        return super().remove(*[m for m in mobjects if m not in self.furniture])
+    CITE_LABELLED_FORMAT = CITE_LABELLED_FORMAT
+    SETTLE = SLIDE_SETTLE
 
 
-class Clicks(DeckSlide):
-    """A DeckSlide whose beat() stops and waits for the presenter."""
-
-    def beat(self):
-        self.next_slide()
+class Clicks(deck.Clicks, DeckSlide):
+    """beat() stops and waits for the presenter."""
 
 
-class RunsOnIntoLoops(DeckSlide):
-    """A DeckSlide on which each stretch plays straight on into the loop after
-    it, so a stage is one click however it is cut: the click starts the stage,
-    and its loop holds the screen until the next. (Without auto_next the
-    stretch would stop on its last frame and need a click of its own to start
-    its loop.)
-
-    auto_next belongs to the segment a next_slide() opens; one with nothing
-    before it sets the options of the slide's first segment instead.
-    """
-
-    def setup(self):
-        super().setup()
-        self.next_slide(auto_next=True)
-
-    def loop(self, hold):
-        """Loop what hold() plays until the click, then run on into the next."""
-        self.next_slide(loop=True)
-        hold()
-        self.next_slide(auto_next=True)
+class RunsOnIntoLoops(deck.RunsOnIntoLoops, DeckSlide):
+    """Each stretch plays straight on into its loop: a stage is one click."""
 
 
-class LoopingStages(RunsOnIntoLoops):
+class LoopingStages(deck.LoopingStages, RunsOnIntoLoops):
     """stage_break() loops two seconds of the running stage until the click."""
-
-    def stage_break(self):
-        self.loop(lambda: self.wait(2))
 
 
 # --- intro -------------------------------------------------------------------

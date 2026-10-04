@@ -20,7 +20,7 @@ from manim import *
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from aion_slides import Clicks  # noqa: E402
-from aionanim.scenes.hifais import HighFluxLoading  # noqa: E402
+from manim_atoms.trapping.scenes.hifais import HighFluxLoading  # noqa: E402
 
 
 class HighFluxLoadingSlide(Clicks, HighFluxLoading):

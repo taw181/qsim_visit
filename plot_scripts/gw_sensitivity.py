@@ -1,6 +1,6 @@
 """Write the GW sensitivity plot to ``figures/gw_sensitivity.png``.
 
-The figure itself is aionanim.plots.gw_sensitivity.
+The figure itself is manim_atoms.aion.plots.gw_sensitivity.
 
     .venv/bin/python plot_scripts/gw_sensitivity.py
 """
@@ -12,8 +12,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from aionanim.plots.gw_sensitivity import sensitivity_figure
-from aionanim.style import PLOT_BACKGROUND
+from manim_atoms.aion.plots.gw_sensitivity import sensitivity_figure
+from manim_atoms.style import PLOT_BACKGROUND
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "figures"

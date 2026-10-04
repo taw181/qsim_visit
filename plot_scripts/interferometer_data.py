@@ -5,7 +5,7 @@
 up on a slide; likewise ``adev.png`` and its steps ``adev_sql.png`` (the limit
 alone) and ``adev_lln.png``; and ``signals.png``, the imprinted-signal scans.
 The figures themselves are
-aionanim.plots.dai_fringes.
+manim_atoms.aion.plots.dai_fringes.
 
     .venv/bin/python plot_scripts/interferometer_data.py
 """
@@ -17,7 +17,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from aionanim.plots.dai_fringes import (
+from manim_atoms.aion.plots.dai_fringes import (
     adev_figure,
     deck_fonts,
     fringes_figure,
@@ -28,7 +28,7 @@ from aionanim.plots.dai_fringes import (
     load_signals,
     signals_figure,
 )
-from aionanim.style import HLN_COLOR, LLN_COLOR, PLOT_BACKGROUND
+from manim_atoms.style import HLN_COLOR, LLN_COLOR, PLOT_BACKGROUND
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "figures"

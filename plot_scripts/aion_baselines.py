@@ -1,7 +1,7 @@
 """Write the AION baseline sketches to ``figures/``: AION-km's,
 ``aion_km_baseline.png``, and AION-10's, ``aion_10_baseline.png``.
 
-Stills of aionanim.tools.baseline's drawing -- four interferometers along a
+Stills of manim_atoms.aion.tools.baseline's drawing -- four interferometers along a
 1 km shaft, and two along 10 m -- on a transparent background, cropped to the
 drawing, for a slide to place as a picture. Drawn on the deck's own frame and
 only then cropped, since manim scales stroke widths with the frame: placed at
@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 from manim import Camera, tempconfig
 
-from aionanim.tools.baseline import make_baseline
+from manim_atoms.aion.tools.baseline import make_baseline
 
 ROOT = Path(__file__).resolve().parent.parent
 # file name: (the shaft's length in scene units, which the slide places it

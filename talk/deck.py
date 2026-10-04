@@ -5,101 +5,31 @@
                                                             # -f FPS frame rate, default 30 (l keeps its 15)
     uv run talk/deck.py present
     uv run talk/deck.py html                                # aion_talk.html, one standalone file
+    uv run talk/deck.py player [OUT]                        # the web player (default player/), after render
 
-The same commands as deck.sh, and the same deck order (talk/deck.txt).
-Standard library only; run from anywhere, it works from the project root so manim.cfg applies.
+The same commands as deck.sh, and the same deck order (talk/deck.txt); the
+work is manim_atoms' manim-atoms-deck. Run from anywhere, it works from the
+project root so manim.cfg applies.
 """
 
-import argparse
 import os
-import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SLIDES = "talk/aion_slides.py"
-QUALITIES = {"l", "m", "h", "p", "k"}
-# manim's rich output is UTF-8; without this a Windows child writing to a log hits cp1252.
-ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
-
-
-def deck_files():
-    """{slide: the file it renders from}, in deck order. A line
-    `extra_slides/x.py: XSlide` names a slide from another file under talk/."""
-    lines = (ROOT / "talk" / "deck.txt").read_text(encoding="utf-8").splitlines()
-    files = {}
-    for line in lines:
-        if not (entry := line.split("#")[0].strip()):
-            continue
-        path, _, slide = entry.rpartition(":")
-        files[slide.strip()] = f"talk/{path.strip()}" if path else SLIDES
-    return files
-
-
-def deck():
-    return list(deck_files())
-
-
-def manim_slides(*args, sync=True, **kwargs):
-    uv = ["uv", "run"] + ([] if sync else ["--no-sync"])
-    return subprocess.run([*uv, "manim-slides", *args], cwd=ROOT, env=ENV, **kwargs).returncode
-
-
-def render(jobs, fps, args):
-    quality = args.pop(0) if args and args[0] in QUALITIES else "h"
-    # 30 fps unless asked otherwise: slide animations don't need 60, and
-    # it halves the frames at h. l keeps its own 15.
-    fps = fps or (15 if quality == "l" else 30)
-    slides = args or deck()
-    files = deck_files()
-
-    def file_of(slide):
-        return files.get(slide, SLIDES)
-
-    # -q h, not -qh: manim-slides reads the h of -qh as --help.
-    quality_args = ["-q", quality, "--fps", str(fps)]
-    if jobs == 1:
-        # one manim-slides run per file, in the order the files first come up
-        rc = 0
-        for path in dict.fromkeys(map(file_of, slides)):
-            named = [s for s in slides if file_of(s) == path]
-            rc = manim_slides("render", *quality_args, path, *named) or rc
-        return rc
-
-    # Cairo renders on one core, so run one process per slide, each
-    # logging to media/deck_logs/<Slide>.log rather than interleaving.
-    logs = ROOT / "media" / "deck_logs"
-    logs.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["uv", "sync", "-q"], cwd=ROOT, check=True)
-
-    def render_one(slide):
-        log = logs / f"{slide}.log"
-        with open(log, "wb") as out:
-            rc = manim_slides("render", *quality_args, file_of(slide), slide, sync=False,
-                              stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
-        print(f"done    {slide}" if rc == 0 else
-              f"FAILED  {slide}  (see {log.relative_to(ROOT).as_posix()})", flush=True)
-        return rc == 0
-
-    with ThreadPoolExecutor(jobs) as pool:
-        ok = all(list(pool.map(render_one, slides)))
-    return 0 if ok else 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["render", "present", "html"])
-    parser.add_argument("-j", type=int, default=1, metavar="N", help="render: N slides at once")
-    parser.add_argument("-f", type=float, metavar="FPS", help="render: frame rate (default 30; l keeps its 15)")
-    parser.add_argument("args", nargs="*", help="render: [l|m|h] [Slide ...]")
-    opts = parser.parse_args()
+    os.chdir(ROOT)
+    if sys.argv[1:2] == ["player"]:
+        sys.path.insert(0, str(ROOT / "talk"))
+        from build_player import main as player
 
-    if opts.command == "render":
-        return render(opts.j, opts.f, opts.args)
-    if opts.command == "present":
-        return manim_slides("present", *deck())
-    return manim_slides("convert", *deck(), "aion_talk.html", "--to", "html", "--one-file")
+        return player(sys.argv[2:])
+    from manim_atoms.slides.cli import main as deck
+
+    return deck(["--deck", "talk/deck.txt", "--slides", "talk/aion_slides.py",
+                 "--html", "aion_talk.html", *sys.argv[1:]])
 
 
 if __name__ == "__main__":

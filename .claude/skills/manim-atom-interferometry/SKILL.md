@@ -11,26 +11,30 @@ The project is `~/talks/qsim_visit` (uv, manim 0.21, Python 3.13). Run manim
 **from the project root** so the root `manim.cfg` applies — it sets
 `media_dir=./media`, medium quality, and a `#101010` background.
 
-The general code is the installable package `src/aionanim/`; `talk/` holds
-only this talk's slide wrappers. Put new scenes and helpers in the package
-unless they only make sense in this deck (CLAUDE.md has the rule).
+The general code is the `manim-atoms` package (its own repo, a dependency
+here; its scenes live under `.venv/lib/python3.13/site-packages/manim_atoms/`,
+or `../manim-atoms/src/manim_atoms/` when it is checked out beside this one
+for editing); `talk/` holds only this talk's slide wrappers. Put new scenes and
+helpers in the package unless they only make sense in this deck (CLAUDE.md
+has the rule). Paths below are inside the package.
 
-- `src/aionanim/style.py` — the whole visual vocabulary: colour scheme,
-  type sizes, `*_STYLE` dicts to splat into constructors, and pacing (`V`).
-- `src/aionanim/tools/primitives.py` — mobject helpers (`make_atom`,
-  `make_laser_pulse`, `momentum_arrow`, `make_guide`), pulse primitives
-  (`absorb`, `emit`), motion (`draw_legs`, `state_colors`).
-- `src/aionanim/scenes/mach_zehnder.py` — `SingleLaserKick` and `MachZehnder`,
-  the simplest scenes built from them.
-- The rest of `tools/` is one module per topic (`spacetime`, `gradiometer`,
-  `clock`, `gradiometer_gw`, `uldm`, `single_photon`, `lmt`, `gw_plot`), each
-  paired with the `scenes/` module of the same name.
+- `style.py` — the core visual vocabulary: colour scheme, type sizes,
+  `*_STYLE` dicts to splat into constructors, and pacing (`V`). Each topic
+  adds its own palettes in `<topic>/style.py`.
+- `core/primitives.py` — mobject helpers (`make_atom`, `make_laser_pulse`,
+  `momentum_arrow`, `make_guide`), pulse primitives (`absorb`, `emit`),
+  motion (`draw_legs`, `state_colors`).
+- `interferometry/scenes/mach_zehnder.py` — `SingleLaserKick` and
+  `MachZehnder`, the simplest scenes built from them.
+- The topics `interferometry`, `trapping` and `aion` each have `tools/` and
+  `scenes/`, paired by module name.
 
 Read style, primitives and mach_zehnder before writing anything — they are
 commented and explain what each piece is for. Everything below is what they
 *don't* say.
 
-Scene files start `from manim import *` then `from aionanim.style import *`,
+Scene files start `from manim import *` then their topic's style
+(`from manim_atoms.interferometry.style import *`),
 and import everything else by absolute name — relative imports break because
 manim loads a scene file by path.
 
@@ -42,7 +46,7 @@ rendered without error.
 
 ```bash
 cd ~/talks/qsim_visit
-uv run manim -ql src/aionanim/scenes/mach_zehnder.py MachZehnder
+uv run manim -ql ../manim-atoms/src/manim_atoms/interferometry/scenes/mach_zehnder.py MachZehnder
 .venv/bin/python <skill>/scripts/frames.py \
     media/videos/mach_zehnder/480p15/MachZehnder.mp4 \
     -t 3.6 7.8 9.3 --final -o /tmp/frames
@@ -95,12 +99,13 @@ in the code.
 ## Adding a scene
 
 Give it its own geometry block of named constants at module level (see the
-`# --- Mach-Zehnder geometry ---` block in `scenes/mach_zehnder.py`), derive
+`# --- Mach-Zehnder geometry ---` block in `interferometry/scenes/mach_zehnder.py`), derive
 every position from them so the shape can be retuned in one place, and reuse the existing helpers rather
 than building atoms or pulses by hand — that is what keeps the talk's
 animations looking like one set of figures. Pull anything visual from
-`aionanim/style.py`; if you need a new colour or width, add it there rather
-than inline. Helpers go in `tools/<topic>.py`, the scene and layout only it
-uses in `scenes/<topic>.py`.
+the style modules; if you need a new colour or width, add it to the topic's
+`style.py` (or the core one, if more than one topic uses it) rather than
+inline. Helpers go in `<topic>/tools/<module>.py`, the scene and layout only
+it uses in `<topic>/scenes/<module>.py`.
 
 Manim 0.21 has `DEGREES` but not the `DEG` alias.
