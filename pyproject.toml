@@ -17,4 +17,4 @@ dependencies = [
 package = false
 
 [tool.uv.sources]
-manim-atoms = { path = "../manim-atoms", editable = true }
+manim-atoms = { git = "https://github.com/taw181/manim-atoms", rev = "3e5bb23d44063a616d0d49330a9dde052f6a8f15" }

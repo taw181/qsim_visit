@@ -706,7 +706,7 @@ wheels = [
 [[package]]
 name = "manim-atoms"
 version = "0.1.0"
-source = { editable = "../manim-atoms" }
+source = { git = "https://github.com/taw181/manim-atoms?rev=3e5bb23d44063a616d0d49330a9dde052f6a8f15#3e5bb23d44063a616d0d49330a9dde052f6a8f15" }
 dependencies = [
     { name = "bibtexparser" },
     { name = "manim" },
@@ -719,15 +719,6 @@ plots = [
 slides = [
     { name = "manim-slides", extra = ["pyside6"] },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "bibtexparser", specifier = ">=2.0.1" },
-    { name = "manim", specifier = ">=0.21.0" },
-    { name = "manim-slides", extras = ["pyside6"], marker = "extra == 'slides'", specifier = ">=5.7.0" },
-    { name = "matplotlib", marker = "extra == 'plots'", specifier = ">=3.11.2" },
-]
-provides-extras = ["slides", "plots"]
 
 [[package]]
 name = "manim-slides"
@@ -1453,7 +1444,7 @@ dependencies = [
 requires-dist = [
     { name = "bibtexparser", specifier = ">=2.0.1" },
     { name = "manim", specifier = ">=0.21.0" },
-    { name = "manim-atoms", extras = ["slides", "plots"], editable = "../manim-atoms" },
+    { name = "manim-atoms", extras = ["slides", "plots"], git = "https://github.com/taw181/manim-atoms?rev=3e5bb23d44063a616d0d49330a9dde052f6a8f15" },
     { name = "manim-slides", extras = ["pyside6"], specifier = ">=5.7.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },
 ]
