@@ -50,3 +50,6 @@ OutroSlide
 extra_slides/hifais_slides.py: HighFluxLoadingSlide
 extra_slides/phase_shear_slides.py: PhaseShearReadoutSlide
 extra_slides/squeezing_slides.py: SpinSqueezingSlide
+extra_slides/lmt_slides.py: LargeMomentumTransferSlide
+extra_slides/lmt_slides.py: LMTMachZehnderSlide
+extra_slides/lmt_slides.py: LMTResultsSlide
